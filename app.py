@@ -1,87 +1,57 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Game Chiến Tranh - Bắn Pháo</title>
-    <style>
-        body { margin: 0; background: #111; color: white; text-align: center; font-family: sans-serif; }
-        canvas { background: #222; border: 2px solid #555; display: block; margin: 20px auto; }
-    </style>
-</head>
-<body>
-    <h1>Chiến Tranh Phòng Thủ Pháo Đài</h1>
-    <p>Bấm chuột vào khu vực game để bắn đại bác diệt địch!</p>
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
+import streamlit as st
+import random
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+st.set_page_config(page_title="Game Chiến Tranh Pháo Đài", page_icon="🛡️")
 
-        let score = 0;
-        let enemies = [];
-        let bullets = [];
+st.title("🛡️ Chiến Tranh Phòng Thủ Pháo Đài")
+st.markdown("Bảo vệ căn cứ của bạn khỏi các đợt tấn công của kẻ địch!")
 
-        // Tạo kẻ địch
-        function spawnEnemy() {
-            enemies.push({ x: canvas.width, y: Math.random() * (canvas.height - 40) + 20, speed: 2, size: 20 });
-        }
-        setInterval(spawnEnemy, 1500);
+if "hp" not in st.session_state:
+    st.session_state.hp = 100
+if "score" not in st.session_state:
+    st.session_state.score = 0
+if "enemies_left" not in st.session_state:
+    st.session_state.enemies_left = 5
 
-        // Bắt sự kiện click chuột để bắn
-        canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const clickY = e.clientY - rect.top;
-            bullets.push({ x: 30, y: canvas.height / 2, targetX: clickX, targetY: clickY, speed: 7 });
-        });
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.metric(label="❤️ Máu Pháo Đài", value=f"{st.session_state.hp}%")
+with col2:
+    st.metric(label="🎯 Điểm Tiêu Diệt", value=st.session_state.score)
+with col3:
+    st.metric(label="⚠️ Địch Còn Lại", value=st.session_state.enemies_left)
 
-        // Vòng lặp cập nhật và vẽ game
-        function update() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+st.markdown("---")
 
-            // Vẽ pháo đài (Người chơi)
-            ctx.fillStyle = '#4CAF50';
-            ctx.fillRect(10, canvas.height / 2 - 25, 30, 50);
+if st.session_state.hp > 0 and st.session_state.enemies_left > 0:
+    st.subheader("Trận chiến đang diễn ra...")
+    
+    if st.button("🔥 BẮN ĐẠI BÁC!", type="primary", use_container_width=True):
+        hit = random.choice([True, True, False])
+        if hit:
+            st.session_state.score += 10
+            st.session_state.enemies_left -= 1
+            st.success("💥 Bách phát bách trúng! Tiêu diệt được 1 tên địch.")
+        else:
+            st.warning("❌ Trượt mất rồi! Kẻ địch đang áp sát.")
+            
+        damage = random.randint(5, 15)
+        st.session_state.hp = max(0, st.session_state.hp - damage)
+        st.rerun()
 
-            // Cập nhật đạn
-            bullets.forEach((b, i) => {
-                const angle = Math.atan2(b.targetY - b.y, b.targetX - b.x);
-                b.x += Math.cos(angle) * b.speed;
-                b.y += Math.sin(angle) * b.speed;
-                
-                ctx.fillStyle = '#FFD700';
-                ctx.beginPath();
-                ctx.arc(b.x, b.y, 5, 0, Math.PI * 2);
-                ctx.fill();
+if st.session_state.hp <= 0:
+    st.error("💀 THẤT BẠI! Pháo Đài của bạn đã bị phá hủy hoàn toàn.")
+    if st.button("🔄 Chơi Lại Từ Đầu"):
+        st.session_state.hp = 100
+        st.session_state.score = 0
+        st.session_state.enemies_left = 5
+        st.rerun()
 
-                if (b.x > canvas.width || b.y > canvas.height || b.x < 0 || b.y < 0) bullets.splice(i, 1);
-            });
-
-            // Cập nhật kẻ địch
-            enemies.forEach((e, ei) => {
-                e.x -= e.speed;
-                ctx.fillStyle = '#FF5252';
-                ctx.fillRect(e.x, e.y, e.size, e.size);
-
-                // Va chạm đạn với địch
-                bullets.forEach((b, bi) => {
-                    if (b.x > e.x && b.x < e.x + e.size && b.y > e.y && b.y < e.y + e.size) {
-                        enemies.splice(ei, 1);
-                        bullets.splice(bi, 1);
-                        score += 10;
-                    }
-                });
-            });
-
-            // Điểm số
-            ctx.fillStyle = '#FFF';
-            ctx.font = '18px Arial';
-            ctx.fillText(`Điểm: ${score}`, 20, 30);
-
-            requestAnimationFrame(update);
-        }
-
-        update();
-    </script>
-</body>
-</html>
+elif st.session_state.enemies_left <= 0:
+    st.balloons()
+    st.success("🏆 CHIẾN THẮNG! Bạn đã quét sạch toàn bộ kẻ địch bảo vệ thành công căn cứ!")
+    if st.button("🎮 Chơi Màn Mới"):
+        st.session_state.hp = 100
+        st.session_state.score += 50
+        st.session_state.enemies_left = 8 + random.randint(1, 5)
+        st.rerun()
