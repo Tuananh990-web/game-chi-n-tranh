@@ -1,117 +1,80 @@
 import streamlit as st
 
-st.set_page_config(page_title="Kingdom War - Boss Edition", page_icon="👑", layout="wide")
+st.set_page_config(page_title="Kingdom War - Ultimate RTS Edition", page_icon="⚔️", layout="wide")
 
 st.markdown("""
     <style>
-    .stApp {
-        background-color: #121212;
-        color: white;
-    }
-    iframe {
-        border-radius: 14px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    }
+    .stApp { background-color: #121212; color: white; }
+    iframe { border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("👑 Kingdom War: Đại Chiến Người Que & Boss Ác Quỷ")
-st.markdown("Xây dựng quân đoàn người que, phòng thủ tòa thành và chiến đấu với Boss khổng lồ!")
+st.title("⚔️ Kingdom War: Đại Chiến Vương Quốc (RTS & Mana System)")
+st.markdown("Chỉ huy quân đoàn Loài Người, điều phối chiến thuật và đại chiến với Cổng Quỷ!")
 
 game_html = """
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Kingdom War Boss Edition</title>
+    <title>Kingdom War RTS</title>
     <style>
-        body {
-            margin: 0;
-            background: #151515;
-            color: white;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            text-align: center;
-            overflow: hidden;
-        }
-        canvas {
-            background: linear-gradient(to bottom, #1e3f20, #2c5e2a);
-            border: 4px solid #5a3d28;
-            border-radius: 10px;
-            box-shadow: 0 12px 35px rgba(0,0,0,0.9);
-            cursor: crosshair;
-            display: block;
-            margin: 8px auto;
-        }
-        .ui-panel {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-top: 6px;
-        }
-        button {
-            background: #b8860b;
-            color: white;
-            border: 2px solid #ffd700;
-            padding: 9px 16px;
-            font-weight: bold;
-            font-size: 13px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        button:hover {
-            background: #daa520;
-            transform: scale(1.06);
-        }
-        .stats {
-            font-size: 15px;
-            font-weight: bold;
-            color: #ffd700;
-            margin-bottom: 4px;
-        }
+        body { margin: 0; background: #111; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; overflow: hidden; }
+        canvas { background: linear-gradient(to bottom, #1d3d1b, #2b5728); border: 4px solid #4a3319; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); cursor: crosshair; display: block; margin: 5px auto; }
+        .ui-panel { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 5px; }
+        .cmd-panel { display: flex; justify-content: center; gap: 10px; margin-top: 5px; }
+        button { background: #b8860b; color: white; border: 2px solid #ffd700; padding: 7px 12px; font-weight: bold; font-size: 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #daa520; transform: scale(1.05); }
+        .cmd-btn { background: #2980b9; border-color: #5adeff; }
+        .cmd-btn:hover { background: #3498db; }
+        .stats { font-size: 14px; font-weight: bold; color: #ffd700; margin-bottom: 2px; }
     </style>
 </head>
 <body>
 
     <div class="stats">
-        🏰 Máu Thành: <span id="hpText">100</span> | 💰 Vàng: <span id="goldText">160</span> | ⚔️ Đã Diệt: <span id="killText">0</span> | 👹 Trạng Thái Boss: <span id="bossStatus" style="color: #2ecc71;">Bình thường</span>
+        🏰 Máu Thành: <span id="hpText">2000</span> | 🔮 Cổng Quỷ: <span id="portalHpText">2000</span> | 💰 Vàng: <span id="goldText">300</span> | ⚔️ Lệnh: <span id="cmdText" style="color:#2ecc71;">TẤN CÔNG</span>
     </div>
 
-    <canvas id="gameCanvas" width="920" height="420"></canvas>
+    <canvas id="gameCanvas" width="960" height="420"></canvas>
+
+    <div class="cmd-panel">
+        <button class="cmd-btn" onclick="setCommand('ATTACK')">⚔️ LỆNH: TẤN CÔNG</button>
+        <button class="cmd-btn" onclick="setCommand('DEFEND')">🛡️ LỆNH: PHÒNG THỦ</button>
+        <button class="cmd-btn" onclick="setCommand('RETREAT')">🚩 LỆNH: RÚT VỀ THÀNH (HỒI MÁU)</button>
+        <button onclick="toggleAudio()">🔊 Bật/Tắt Âm Thanh</button>
+    </div>
 
     <div class="ui-panel">
-        <button onclick="toggleAudio()">🔊 Bật/Tắt Âm Thanh</button>
-        <button onclick="spawnUnit('footman')">🛡️ Lính Kiếm (50 Gold)</button>
-        <button onclick="spawnUnit('archer')">🏹 Lính Cung (70 Gold)</button>
-        <button onclick="castSpell('meteor')">☄️ Mưa Thiên Thạch</button>
-        <button onclick="castSpell('freeze')">❄️ Đóng Băng</button>
+        <button onclick="spawnUnit('footman')">🛡️ Bộ Binh (40g)</button>
+        <button onclick="spawnUnit('archer')">🏹 Cung Thủ (60g)</button>
+        <button onclick="spawnUnit('lancer')">🗡️ Cầm Giáo (70g)</button>
+        <button onclick="spawnUnit('mage')">🧙 Pháp Sư (100g)</button>
+        <button onclick="spawnUnit('giant')">🗿 Khổng Lồ (180g)</button>
     </div>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        let hp = 100;
-        let gold = 160;
-        let kills = 0;
-        let freezeTimer = 0;
-        let audioEnabled = false;
-        let bossSpawned = false;
+        let castleHp = 2000, castleMaxHp = 2000;
+        let portalHp = 2000, portalMaxHp = 2000;
+        let gold = 300;
+        let currentCommand = 'ATTACK'; // ATTACK, DEFEND, RETREAT
+
+        let castleEnraged = false;
+        let portalEnraged = false;
 
         let units = [];
         let enemies = [];
         let particles = [];
         let animFrame = 0;
 
-        let audioCtx = null;
-        let bgmInterval = null;
+        let audioEnabled = false, audioCtx = null;
 
         function toggleAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             audioEnabled = !audioEnabled;
-            if (audioEnabled) startBGM(); else stopBGM();
         }
 
         function playSound(freq, type, duration) {
@@ -121,100 +84,94 @@ game_html = """
                 let gain = audioCtx.createGain();
                 osc.type = type;
                 osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + duration);
             } catch(e) {}
         }
 
-        function startBGM() {
-            if (bgmInterval) return;
-            const notes = [200, 230, 260, 290, 320];
-            bgmInterval = setInterval(() => {
-                if (!audioEnabled) return;
-                let note = notes[Math.floor(Math.random() * notes.length)];
-                playSound(note, 'triangle', 0.25);
-            }, 450);
+        function setCommand(cmd) {
+            currentCommand = cmd;
+            let txt = cmd === 'ATTACK' ? 'TẤN CÔNG' : (cmd === 'DEFEND' ? 'PHÒNG THỦ' : 'RÚT VỀ THÀNH');
+            document.getElementById("cmdText").innerText = txt;
         }
 
-        function stopBGM() {
-            if (bgmInterval) { clearInterval(bgmInterval); bgmInterval = null; }
-        }
-
-        // Sinh quái định kỳ (hoặc Boss nếu đủ điểm)
+        // Tự sinh quái định kỳ từ Cổng Quỷ
         setInterval(() => {
-            if (bossSpawned) return;
-
-            // Cứ mỗi 10 mạng sẽ xuất hiện Boss Ác Quỷ khổng lồ
-            if (kills > 0 && kills % 10 === 0 && !enemies.some(e => e.isBoss)) {
-                bossSpawned = true;
-                document.getElementById("bossStatus").innerText = "⚠️ BOSS ĐANG TẤN CÔNG!";
-                document.getElementById("bossStatus").style.color = "#e74c3c";
-                enemies.push({
-                    x: canvas.width + 50,
-                    y: 200,
-                    hp: 300,
-                    maxHp: 300,
-                    speed: 0.4,
-                    type: 'boss',
-                    isBoss: true
-                });
-                playSound(100, 'sawtooth', 1.0);
-                return;
+            if (portalHp > 0 && enemies.length < 35) {
+                let types = ['goblin', 'orc', 'demon_mage', 'troll'];
+                let t = types[Math.floor(Math.random() * types.length)];
+                enemies.push(createEnemyObject(t));
             }
+        }, 1800);
 
-            if (enemies.length < 8) {
-                enemies.push({
-                    x: canvas.width + 30,
-                    y: 110 + Math.random() * 250,
-                    hp: 40 + kills * 3,
-                    maxHp: 40 + kills * 3,
-                    speed: 0.7 + Math.random() * 0.5,
-                    type: Math.random() > 0.4 ? 'goblin' : 'orc',
-                    isBoss: false
+        // Hồi máu 6 HP/s khi quân đứng gần thành (Lệnh Rút về)
+        setInterval(() => {
+            if (currentCommand === 'RETREAT') {
+                units.forEach(u => {
+                    if (u.x < 220 && u.hp < u.maxHp) {
+                        u.hp = Math.min(u.maxHp, u.hp + 6);
+                        createParticles(u.x, u.y - 10, '#2ecc71', 2);
+                    }
                 });
             }
-        }, 2000);
-
-        setInterval(() => {
-            gold += 15;
+            gold += 12;
             updateUI();
-        }, 2000);
+        }, 1000);
 
         function updateUI() {
-            document.getElementById("hpText").innerText = Math.max(0, hp);
+            document.getElementById("hpText").innerText = Math.max(0, Math.floor(castleHp));
+            document.getElementById("portalHpText").innerText = Math.max(0, Math.floor(portalHp));
             document.getElementById("goldText").innerText = gold;
-            document.getElementById("killText").innerText = kills;
+        }
+
+        function createUnitObject(type) {
+            let stats = {
+                footman: { hp: 120, dmg: 12, range: 35, speed: 1.2, size: 1 },
+                archer:  { hp: 80,  dmg: 16, range: 180, speed: 1.1, size: 1 },
+                lancer:  { hp: 140, dmg: 18, range: 55, speed: 1.0, size: 1.1 },
+                mage:    { hp: 90,  dmg: 28, range: 150, speed: 0.9, size: 1 },
+                giant:   { hp: 450, dmg: 40, range: 45, speed: 0.6, size: 1.8 }
+            }[type];
+
+            return {
+                x: 130 + Math.random() * 30,
+                y: 140 + Math.random() * 200,
+                type: type,
+                hp: stats.hp, maxHp: stats.hp,
+                dmg: stats.dmg, range: stats.range, speed: stats.speed, size: stats.size,
+                mana: 0, maxMana: 100,
+                attackCd: 0
+            };
+        }
+
+        function createEnemyObject(type) {
+            let stats = {
+                goblin:     { hp: 80,  dmg: 8,  range: 30, speed: 1.4, size: 0.9 },
+                orc:        { hp: 160, dmg: 16, range: 35, speed: 1.0, size: 1.2 },
+                demon_mage: { hp: 100, dmg: 22, range: 140, speed: 0.8, size: 1 },
+                troll:      { hp: 380, dmg: 35, range: 45, speed: 0.5, size: 1.7 }
+            }[type];
+
+            return {
+                x: canvas.width - 120 - Math.random() * 30,
+                y: 140 + Math.random() * 200,
+                type: type,
+                hp: stats.hp, maxHp: stats.hp,
+                dmg: stats.dmg, range: stats.range, speed: stats.speed, size: stats.size,
+                mana: 0, maxMana: 100,
+                attackCd: 0
+            };
         }
 
         function spawnUnit(type) {
-            let cost = type === 'footman' ? 50 : 70;
-            if (gold >= cost) {
-                gold -= cost;
-                units.push({
-                    x: 190 + Math.random() * 40,
-                    y: 130 + Math.random() * 230,
-                    type: type,
-                    attackCooldown: 0
-                });
-                playSound(450, 'square', 0.12);
+            let costs = { footman: 40, archer: 60, lancer: 70, mage: 100, giant: 180 };
+            if (gold >= costs[type]) {
+                gold -= costs[type];
+                units.push(createUnitObject(type));
+                playSound(400, 'square', 0.1);
                 updateUI();
-            }
-        }
-
-        function castSpell(type) {
-            if (type === 'meteor') {
-                enemies.forEach(e => {
-                    e.hp -= e.isBoss ? 50 : 70;
-                    createParticles(e.x, e.y, '#ff4500', 16);
-                });
-                playSound(130, 'sawtooth', 0.5);
-            } else if (type === 'freeze') {
-                freezeTimer = 180;
-                playSound(750, 'sine', 0.4);
             }
         }
 
@@ -222,203 +179,240 @@ game_html = """
             for (let i = 0; i < count; i++) {
                 particles.push({
                     x: x, y: y,
-                    vx: (Math.random() - 0.5) * 7,
-                    vy: (Math.random() - 0.5) * 7,
-                    life: 25,
-                    color: color
+                    vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
+                    life: 20, color: color
                 });
             }
         }
 
-        // Vẽ Tòa thành hoành tráng bên trái
-        function drawCastle() {
-            // Thân tường thành chính
-            ctx.fillStyle = "#3e4a59";
-            ctx.fillRect(0, 50, 110, 330);
-
-            // Các khối gạch tường thành
+        // --- VẼ ĐỒ HỌA CHI TIẾT ---
+        function drawDetailedCastle() {
+            // Nền móng đá
             ctx.fillStyle = "#2c3e50";
-            for(let i = 60; i < 370; i += 30) {
-                ctx.fillRect(10, i, 40, 20);
-                ctx.fillRect(60, i + 15, 40, 20);
+            ctx.fillRect(0, 50, 140, 330);
+
+            // Tường gạch hoa văn
+            ctx.fillStyle = "#34495e";
+            for(let y = 60; y < 370; y += 25) {
+                for(let x = 0; x < 130; x += 30) {
+                    ctx.fillRect(x + (y%50==0?10:0), y, 26, 20);
+                }
             }
 
-            // Tháp canh phía trên
-            ctx.fillRect(15, 20, 35, 45);
-            ctx.fillRect(65, 20, 35, 45);
-
-            // Cổng thành lớn
+            // Mái vòm & Cổng sắt
             ctx.fillStyle = "#1a252f";
-            ctx.beginPath();
-            ctx.arc(65, 300, 25, Math.PI, 0, false);
-            ctx.fill();
-            ctx.fillRect(40, 300, 50, 80);
+            ctx.beginPath(); ctx.arc(70, 290, 30, Math.PI, 0, false); ctx.fill();
+            ctx.fillRect(40, 290, 60, 90);
 
-            // Cờ vương quốc trên đỉnh tháp
+            // Tháp canh & Cờ rồng
             ctx.fillStyle = "#e74c3c";
-            ctx.fillRect(30, 0, 15, 20);
-            ctx.fillRect(80, 0, 15, 20);
+            ctx.fillRect(20, 20, 25, 30); ctx.fillRect(95, 20, 25, 30);
+            ctx.fillStyle = "#f1c40f";
+            ctx.beginPath(); ctx.arc(32, 10, 6, 0, Math.PI*2); ctx.fill();
+
+            // Hiệu ứng phẫn nộ (<50% Máu)
+            if (castleHp / castleMaxHp < 0.5) {
+                ctx.strokeStyle = "rgba(52, 152, 219, 0.8)";
+                ctx.lineWidth = 4;
+                ctx.strokeRect(2, 52, 136, 326);
+            }
         }
 
-        function drawStickman(x, y, color, isArcher, isMoving) {
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2.5;
-            let legSwing = isMoving ? Math.sin(animFrame * 0.3) * 8 : 0;
+        function drawDemonPortal() {
+            let cx = canvas.width - 70, cy = 230;
+            // Vòng xoáy ma thuật
+            let grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, 60);
+            grad.addColorStop(0, "#e81cff");
+            grad.addColorStop(0.5, "#4a154b");
+            grad.addColorStop(1, "#11001c");
 
-            // Đầu
-            ctx.beginPath(); ctx.arc(x, y - 14, 6, 0, Math.PI * 2); ctx.stroke();
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.arc(cx, cy, 60, 0, Math.PI * 2); ctx.fill();
+
+            // Đá cổ tự xung quanh
+            ctx.fillStyle = "#2a0845";
+            for(let a = 0; a < Math.PI*2; a += Math.PI/3) {
+                let px = cx + Math.cos(a + animFrame*0.02) * 50;
+                let py = cy + Math.sin(a + animFrame*0.02) * 50;
+                ctx.fillRect(px - 6, py - 6, 12, 12);
+            }
+
+            // Hiệu ứng phẫn nộ (<50% Máu)
+            if (portalHp / portalMaxHp < 0.5) {
+                ctx.strokeStyle = "rgba(231, 76, 60, 0.8)";
+                ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.arc(cx, cy, 65, 0, Math.PI*2); ctx.stroke();
+            }
+        }
+
+        function drawCharacter(entity, isEnemy) {
+            let x = entity.x, y = entity.y, s = entity.size;
+            let color = isEnemy ? '#e74c3c' : '#3498db';
+            if (entity.type === 'giant' || entity.type === 'troll') color = isEnemy ? '#8e44ad' : '#f39c12';
+            if (entity.type === 'mage' || entity.type === 'demon_mage') color = isEnemy ? '#e67e22' : '#9b59b6';
+
+            ctx.save();
+            ctx.translate(x, y);
+
             // Thân
-            ctx.beginPath(); ctx.moveTo(x, y - 8); ctx.lineTo(x, y + 6); ctx.stroke();
-            // Tay vũ khí
-            ctx.beginPath(); ctx.moveTo(x, y - 4);
-            if (isArcher) {
-                ctx.lineTo(x + 10, y - 6); ctx.stroke();
-                ctx.strokeStyle = '#d4af37';
-                ctx.beginPath(); ctx.arc(x + 10, y - 6, 8, -Math.PI/2, Math.PI/2); ctx.stroke();
-            } else {
-                ctx.lineTo(x + 10, y + 2); ctx.stroke();
-            }
+            ctx.fillStyle = color;
+            ctx.beginPath(); ctx.arc(0, -12 * s, 8 * s, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = color; ctx.lineWidth = 3 * s;
+            ctx.beginPath(); ctx.moveTo(0, -4 * s); ctx.lineTo(0, 10 * s); ctx.stroke();
+
             // Chân
-            ctx.strokeStyle = color;
-            ctx.beginPath();
-            ctx.moveTo(x, y + 6); ctx.lineTo(x - 6, y + 18 + legSwing);
-            ctx.moveTo(x, y + 6); ctx.lineTo(x + 6, y + 18 - legSwing);
-            ctx.stroke();
+            let swing = Math.sin(animFrame * 0.2) * 6;
+            ctx.beginPath(); ctx.moveTo(0, 10 * s); ctx.lineTo(-6 * s, 20 * s + swing); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, 10 * s); ctx.lineTo(6 * s, 20 * s - swing); ctx.stroke();
+
+            // Thanh Máu
+            ctx.fillStyle = "#000"; ctx.fillRect(-15 * s, -28 * s, 30 * s, 4);
+            ctx.fillStyle = "#2ecc71"; ctx.fillRect(-15 * s, -28 * s, (entity.hp / entity.maxHp) * 30 * s, 4);
+
+            // Thanh MANA (Xanh dương)
+            ctx.fillStyle = "#000"; ctx.fillRect(-15 * s, -23 * s, 30 * s, 3);
+            ctx.fillStyle = "#00d2ff"; ctx.fillRect(-15 * s, -23 * s, (entity.mana / entity.maxMana) * 30 * s, 3);
+
+            ctx.restore();
         }
 
-        function drawMonster(enemy) {
-            let x = enemy.x, y = enemy.y;
-            let hpRatio = enemy.hp / enemy.maxHp;
-
-            if (enemy.isBoss) {
-                // Vẽ BOSS ÁC QUỶ KHỔNG LỒ
-                ctx.fillStyle = "#8b0000";
-                ctx.strokeStyle = "#ff4500";
-                ctx.lineWidth = 3;
-                ctx.beginPath(); ctx.arc(x, y - 10, 26, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-
-                // Sừng Boss
-                ctx.fillStyle = "#ffcc00";
-                ctx.beginPath();
-                ctx.moveTo(x - 15, y - 25); ctx.lineTo(x - 28, y - 45); ctx.lineTo(x - 8, y - 30);
-                ctx.moveTo(x + 15, y - 25); ctx.lineTo(x + 28, y - 45); ctx.lineTo(x + 8, y - 30);
-                ctx.fill();
-
-                // Thanh máu Boss (to hơn)
-                ctx.fillStyle = "#000";
-                ctx.fillRect(x - 35, y - 55, 70, 7);
-                ctx.fillStyle = "#e74c3c";
-                ctx.fillRect(x - 35, y - 55, hpRatio * 70, 7);
-            } else {
-                // Quái thường (Goblin / Orc)
-                ctx.fillStyle = enemy.type === 'goblin' ? '#2ecc71' : '#e67e22';
-                ctx.strokeStyle = '#111';
-                ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.arc(x, y - 6, 12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-
-                // Thanh máu thường
-                ctx.fillStyle = "#000";
-                ctx.fillRect(x - 16, y - 28, 32, 5);
-                ctx.fillStyle = "#2ecc71";
-                ctx.fillRect(x - 16, y - 28, hpRatio * 32, 5);
-            }
-        }
-
+        // --- VÒNG LẶP XỬ LÝ CHÍNH ---
         function gameLoop() {
             animFrame++;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Đường đi chiến trường
-            ctx.fillStyle = "#7a5230";
-            ctx.fillRect(0, 100, canvas.width, 260);
+            // Chiến trường
+            ctx.fillStyle = "#63472d"; ctx.fillRect(0, 110, canvas.width, 250);
 
-            // Vẽ Tòa Thành Cố Thủ
-            drawCastle();
+            drawDetailedCastle();
+            drawDemonPortal();
 
-            // Cổng ác quỷ xuất hiện bên phải
-            ctx.fillStyle = "#4a154b";
-            ctx.beginPath(); ctx.arc(canvas.width - 35, 230, 45, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = "#9b59b6";
-            ctx.beginPath(); ctx.arc(canvas.width - 35, 230, 25, 0, Math.PI * 2); ctx.fill();
+            // KIỂM TRA PHẪN NỘ (<50% MÁU & GIẢM 99% SÁT THƯƠNG)
+            if (castleHp / castleMaxHp < 0.5 && !castleEnraged) {
+                castleEnraged = true;
+                for(let i = 0; i < 30; i++) {
+                    let types = ['footman', 'archer', 'lancer'];
+                    units.push(createUnitObject(types[i % 3]));
+                }
+                createParticles(100, 200, '#00d2ff', 50);
+                playSound(200, 'sawtooth', 0.8);
+            }
 
-            // Cập nhật & vẽ Quái vật & Boss
-            enemies.forEach((enemy, index) => {
-                if (freezeTimer <= 0) {
-                    enemy.x -= enemy.speed;
+            if (portalHp / portalMaxHp < 0.5 && !portalEnraged) {
+                portalEnraged = true;
+                for(let i = 0; i < 40; i++) {
+                    let types = ['goblin', 'orc', 'demon_mage'];
+                    enemies.push(createEnemyObject(types[i % 3]));
+                }
+                createParticles(canvas.width - 100, 200, '#e74c3c', 50);
+                playSound(150, 'sawtooth', 0.8);
+            }
+
+            // XỬ LÝ QUÂN PHE TA
+            units.forEach((u, uIdx) => {
+                let targetX = u.x;
+                if (currentCommand === 'ATTACK') targetX = canvas.width - 130;
+                else if (currentCommand === 'DEFEND') targetX = 300;
+                else if (currentCommand === 'RETREAT') targetX = 180;
+
+                // Tự di chuyển
+                let enemyNear = enemies.find(e => Math.hypot(e.x - u.x, e.y - u.y) <= u.range);
+                if (!enemyNear && Math.abs(u.x - targetX) > 10) {
+                    u.x += u.x < targetX ? u.speed : -u.speed;
                 }
 
-                // Quái / Boss đánh vào thành
-                if (enemy.x <= 110) {
-                    hp -= enemy.isBoss ? 40 : 10;
-                    if (enemy.isBoss) {
-                        bossSpawned = false;
-                        document.getElementById("bossStatus").innerText = "Bình thường";
-                        document.getElementById("bossStatus").style.color = "#2ecc71";
-                    }
-                    enemies.splice(index, 1);
-                    playSound(90, 'sawtooth', 0.5);
-                    updateUI();
-                }
-
-                drawMonster(enemy);
-
-                if (enemy.hp <= 0) {
-                    if (enemy.isBoss) {
-                        bossSpawned = false;
-                        gold += 150;
-                        kills += 5;
-                        document.getElementById("bossStatus").innerText = "Đã hạ Boss!";
-                        document.getElementById("bossStatus").style.color = "#f1c40f";
-                    } else {
-                        gold += 25;
-                        kills++;
-                    }
-                    enemies.splice(index, 1);
-                    createParticles(enemy.x, enemy.y, '#f1c40f', enemy.isBoss ? 30 : 10);
-                    playSound(550, 'sine', 0.2);
-                    updateUI();
-                }
-            });
-
-            if (freezeTimer > 0) freezeTimer--;
-
-            // Cập nhật & vẽ Lính người que phe ta
-            units.forEach((unit) => {
-                let isMoving = true;
-                if (unit.attackCooldown > 0) {
-                    unit.attackCooldown--;
-                    isMoving = false;
-                } else {
-                    let target = enemies.find(e => Math.hypot(e.x - unit.x, e.y - unit.y) < 70);
+                // Tấn công
+                if (u.attackCd > 0) u.attackCd--;
+                else {
+                    let target = enemies.find(e => Math.hypot(e.x - u.x, e.y - u.y) <= u.range);
                     if (target) {
-                        target.hp -= unit.type === 'footman' ? 12 : 18;
-                        createParticles(target.x, target.y, '#ffffff', 5);
-                        playSound(320, 'square', 0.08);
-                        unit.attackCooldown = 35;
-                        isMoving = false;
+                        let dmg = u.dmg;
+                        target.hp -= dmg;
+                        u.mana = Math.min(u.maxMana, u.mana + 25); // Tích Mana
+                        createParticles(target.x, target.y, '#fff', 4);
+                        u.attackCd = 30;
+                    } else if (u.x >= canvas.width - 140) {
+                        // Tấn công Cổng Quỷ
+                        let dmg = portalEnraged ? u.dmg * 0.01 : u.dmg; // Giảm 99% dame khi phẫn nộ
+                        portalHp -= dmg;
+                        u.mana = Math.min(u.maxMana, u.mana + 15);
+                        u.attackCd = 35;
+                        updateUI();
                     }
                 }
 
-                let color = unit.type === 'footman' ? '#3498db' : '#f39c12';
-                drawStickman(unit.x, unit.y, color, unit.type === 'archer', isMoving);
+                // KÍCH HOẠT FULL MANA
+                if (u.mana >= u.maxMana) {
+                    u.mana = 0;
+                    u.hp = Math.min(u.maxHp, u.hp + 50); // Hồi 50 HP
+                    enemies.forEach(e => {
+                        if (Math.hypot(e.x - u.x, e.y - u.y) < 120) e.hp -= 45; // Tuyệt chiêu diện rộng
+                    });
+                    createParticles(u.x, u.y, '#00d2ff', 25);
+                    playSound(600, 'sine', 0.3);
+                }
+
+                drawCharacter(u, false);
+
+                if (u.hp <= 0) units.splice(uIdx, 1);
             });
 
-            // Hiệu ứng hạt
-            particles.forEach((p, index) => {
+            // XỬ LÝ QUÁI VẬT
+            enemies.forEach((e, eIdx) => {
+                let unitNear = units.find(u => Math.hypot(u.x - e.x, u.y - e.y) <= e.range);
+                if (!unitNear && e.x > 140) {
+                    e.x -= e.speed;
+                }
+
+                if (e.attackCd > 0) e.attackCd--;
+                else {
+                    let target = units.find(u => Math.hypot(u.x - e.x, u.y - e.y) <= e.range);
+                    if (target) {
+                        target.hp -= e.dmg;
+                        e.mana = Math.min(e.maxMana, e.mana + 20);
+                        createParticles(target.x, target.y, '#e74c3c', 4);
+                        e.attackCd = 32;
+                    } else if (e.x <= 140) {
+                        // Tấn công Tòa Thành
+                        let dmg = castleEnraged ? e.dmg * 0.01 : e.dmg; // Giảm 99% dame khi phẫn nộ
+                        castleHp -= dmg;
+                        e.mana = Math.min(e.maxMana, e.mana + 15);
+                        e.attackCd = 35;
+                        updateUI();
+                    }
+                }
+
+                // Full Mana Quái
+                if (e.mana >= e.maxMana) {
+                    e.mana = 0;
+                    units.forEach(u => {
+                        if (Math.hypot(u.x - e.x, u.y - e.y) < 100) u.hp -= 35;
+                    });
+                    createParticles(e.x, e.y, '#e74c3c', 20);
+                }
+
+                drawCharacter(e, true);
+
+                if (e.hp <= 0) {
+                    enemies.splice(eIdx, 1);
+                    gold += 20;
+                    updateUI();
+                }
+            });
+
+            // Hiệu ứng Hạt
+            particles.forEach((p, idx) => {
                 p.x += p.vx; p.y += p.vy; p.life--;
-                ctx.fillStyle = p.color;
-                ctx.fillRect(p.x, p.y, 3, 3);
-                if (p.life <= 0) particles.splice(index, 1);
+                ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 3, 3);
+                if (p.life <= 0) particles.splice(idx, 1);
             });
 
-            // Màn hình kết thúc
-            if (hp <= 0) {
-                stopBGM();
-                ctx.fillStyle = "rgba(0,0,0,0.85)";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = "red";
-                ctx.font = "bold 38px Arial";
-                ctx.fillText("TÒA THÀNH ĐÃ THẤT THỦ!", canvas.width / 2 - 220, canvas.height / 2);
+            // Kết thúc Game
+            if (castleHp <= 0 || portalHp <= 0) {
+                ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = castleHp > 0 ? "#2ecc71" : "#e74c3c";
+                ctx.font = "bold 36px Arial";
+                ctx.fillText(castleHp > 0 ? "🏆 VƯƠNG QUỐC CHIẾN THẮNG!" : "💀 TÒA THÀNH ĐÃ THẤT THỦ!", canvas.width / 2 - 220, canvas.height / 2);
                 return;
             }
 
@@ -431,4 +425,4 @@ game_html = """
 </html>
 """
 
-st.components.v1.html(game_html, height=520, scrolling=False)
+st.components.v1.html(game_html, height=540, scrolling=False)
