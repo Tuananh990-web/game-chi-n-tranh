@@ -389,4 +389,46 @@ game_html = """
                     unit.attackCooldown--;
                     isMoving = false;
                 } else {
-                    let target = enemies.find(e => Math.hyp
+                    let target = enemies.find(e => Math.hypot(e.x - unit.x, e.y - unit.y) < 70);
+                    if (target) {
+                        target.hp -= unit.type === 'footman' ? 12 : 18;
+                        createParticles(target.x, target.y, '#ffffff', 5);
+                        playSound(320, 'square', 0.08);
+                        unit.attackCooldown = 35;
+                        isMoving = false;
+                    }
+                }
+
+                let color = unit.type === 'footman' ? '#3498db' : '#f39c12';
+                drawStickman(unit.x, unit.y, color, unit.type === 'archer', isMoving);
+            });
+
+            // Hiệu ứng hạt
+            particles.forEach((p, index) => {
+                p.x += p.vx; p.y += p.vy; p.life--;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, 3, 3);
+                if (p.life <= 0) particles.splice(index, 1);
+            });
+
+            // Màn hình kết thúc
+            if (hp <= 0) {
+                stopBGM();
+                ctx.fillStyle = "rgba(0,0,0,0.85)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "red";
+                ctx.font = "bold 38px Arial";
+                ctx.fillText("TÒA THÀNH ĐÃ THẤT THỦ!", canvas.width / 2 - 220, canvas.height / 2);
+                return;
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
+"""
+
+st.components.v1.html(game_html, height=520, scrolling=False)
