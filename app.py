@@ -1,89 +1,90 @@
 import streamlit as st
 
-st.set_page_config(page_title="Kingdom War 2D Defense", page_icon="🏰", layout="wide")
+st.set_page_config(page_title="Kingdom War - Stickman Edition", page_icon="⚔️", layout="wide")
 
-# CSS tinh chỉnh giao diện cho gọn gàng, đẹp mắt
 st.markdown("""
     <style>
     .stApp {
-        background-color: #1a1a1a;
+        background-color: #121212;
         color: white;
     }
     iframe {
-        border-radius: 12px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        border-radius: 14px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🏰 Kingdom War: 2D Defense Battle")
-st.markdown("Chỉ huy đội quân, xây dựng tháp phòng thủ và tiêu diệt lũ quái vật tấn công vương quốc!")
+st.title("⚔️ Kingdom War: Người Que Đại Chiến & Âm Thanh Sống Động")
+st.markdown("Triệu hồi người que thủ thành, tiêu diệt quái vật và thưởng thức âm thanh chiến trận hoành tráng!")
 
-# Mã HTML/JS trò chơi canvas trực quan hoàn chỉnh nhúng vào Streamlit
 game_html = """
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Kingdom War 2D</title>
+    <title>Stickman Kingdom War</title>
     <style>
         body {
             margin: 0;
-            background: #121212;
+            background: #1a1a1a;
             color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
             text-align: center;
             overflow: hidden;
         }
         canvas {
-            background: #2e6f40;
+            background: linear-gradient(to bottom, #2d5a27, #3b7a30);
             border: 4px solid #4a3319;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            border-radius: 10px;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.9);
             cursor: crosshair;
             display: block;
-            margin: 10px auto;
+            margin: 8px auto;
         }
         .ui-panel {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin-top: 8px;
+            gap: 12px;
+            margin-top: 6px;
         }
         button {
-            background: #b5832a;
+            background: #c28827;
             color: white;
-            border: 2px solid #ffcc4d;
-            padding: 8px 16px;
+            border: 2px solid #ffde6b;
+            padding: 9px 16px;
             font-weight: bold;
+            font-size: 13px;
             border-radius: 6px;
             cursor: pointer;
             transition: 0.2s;
         }
         button:hover {
-            background: #d49a33;
-            transform: scale(1.05);
+            background: #e6a738;
+            transform: scale(1.06);
         }
         .stats {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
-            color: #ffcc4d;
+            color: #ffde6b;
+            margin-bottom: 4px;
         }
     </style>
 </head>
 <body>
 
     <div class="stats">
-        ❤️ Máu Thành: <span id="hpText">100</span> | 💰 Vàng: <span id="goldText">150</span> | ⚔️ Đã Diệt: <span id="killText">0</span>
+        ❤️ Máu Thành: <span id="hpText">100</span> | 💰 Vàng: <span id="goldText">150</span> | ⚔️ Đã Diệt: <span id="killText">0</span> | 🎵 Âm thanh: <span id="soundStatus" style="color: #2ecc71;">Bật</span>
     </div>
 
-    <canvas id="gameCanvas" width="900" height="450"></canvas>
+    <canvas id="gameCanvas" width="920" height="420"></canvas>
 
     <div class="ui-panel">
-        <button onclick="spawnUnit('footman')">🛡️ Triệu Hồi Bộ Binh (50 Gold)</button>
-        <button onclick="spawnUnit('archer')">🏹 Triệu Hồi Cung Thủ (70 Gold)</button>
+        <button onclick="toggleAudio()">🔊 Bật/Tắt Nhạc & Âm Thanh</button>
+        <button onclick="spawnUnit('footman')">🛡️ Lính Người Que Kiếm (50 Gold)</button>
+        <button onclick="spawnUnit('archer')">🏹 Lính Người Que Cung (70 Gold)</button>
         <button onclick="castSpell('meteor')">☄️ Mưa Thiên Thạch</button>
-        <button onclick="castSpell('freeze')">❄️ Đóng Băng Kẻ Địch</button>
+        <button onclick="castSpell('freeze')">❄️ Đóng Băng Quái</button>
     </div>
 
     <script>
@@ -94,29 +95,82 @@ game_html = """
         let gold = 150;
         let kills = 0;
         let freezeTimer = 0;
+        let audioEnabled = false;
 
         let units = [];
         let enemies = [];
-        let projectiles = [];
         let particles = [];
+        let animFrame = 0;
 
-        // Khởi tạo đợt quái vật định kỳ
+        // --- WEB AUDIO API (Tạo nhạc nền & âm thanh chém/bắn không cần file ngoài) ---
+        let audioCtx = null;
+        let bgmInterval = null;
+
+        function toggleAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            audioEnabled = !audioEnabled;
+            document.getElementById("soundStatus").innerText = audioEnabled ? "Bật" : "Tắt";
+            document.getElementById("soundStatus").style.color = audioEnabled ? "#2ecc71" : "#e74c3c";
+
+            if (audioEnabled) {
+                startBGM();
+            } else {
+                stopBGM();
+            }
+        }
+
+        function playSound(freq, type, duration) {
+            if (!audioEnabled || !audioCtx) return;
+            try {
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function startBGM() {
+            if (bgmInterval) return;
+            // Nhạc nền chiến trận dạng chùm nốt nhạc giao hưởng giả lập
+            const notes = [220, 247, 261, 293, 329, 349, 392];
+            bgmInterval = setInterval(() => {
+                if (!audioEnabled) return;
+                let note = notes[Math.floor(Math.random() * notes.length)];
+                playSound(note, 'triangle', 0.3);
+            }, 400);
+        }
+
+        function stopBGM() {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
+            }
+        }
+
+        // --- HỆ THỐNG GAME SINH TỰ ĐỘNG ---
         setInterval(() => {
-            if (enemies.length < 8) {
+            if (enemies.length < 9) {
                 enemies.push({
                     x: canvas.width + 30,
-                    y: 120 + Math.random() * 260,
-                    hp: 40 + kills * 5,
-                    maxHp: 40 + kills * 5,
-                    speed: 0.8 + Math.random() * 0.6,
-                    type: Math.random() > 0.5 ? 'goblin' : 'orc'
+                    y: 110 + Math.random() * 250,
+                    hp: 45 + kills * 4,
+                    maxHp: 45 + kills * 4,
+                    speed: 0.7 + Math.random() * 0.5,
+                    type: Math.random() > 0.4 ? 'goblin' : 'orc'
                 });
             }
-        }, 2500);
+        }, 2200);
 
-        // Thu thập vàng tự động theo thời gian
         setInterval(() => {
-            gold += 15;
+            gold += 18;
             updateUI();
         }, 2000);
 
@@ -131,11 +185,12 @@ game_html = """
             if (gold >= cost) {
                 gold -= cost;
                 units.push({
-                    x: 180 + Math.random() * 60,
-                    y: 140 + Math.random() * 220,
+                    x: 180 + Math.random() * 50,
+                    y: 130 + Math.random() * 230,
                     type: type,
                     attackCooldown: 0
                 });
+                playSound(500, 'square', 0.15);
                 updateUI();
             }
         }
@@ -143,11 +198,13 @@ game_html = """
         function castSpell(type) {
             if (type === 'meteor') {
                 enemies.forEach(e => {
-                    e.hp -= 50;
-                    createParticles(e.x, e.y, '#ff4500', 15);
+                    e.hp -= 60;
+                    createParticles(e.x, e.y, '#ff4500', 18);
                 });
+                playSound(150, 'sawtooth', 0.6);
             } else if (type === 'freeze') {
-                freezeTimer = 180; // Đóng băng trong 3 giây
+                freezeTimer = 200;
+                playSound(800, 'sine', 0.5);
             }
         }
 
@@ -155,99 +212,155 @@ game_html = """
             for (let i = 0; i < count; i++) {
                 particles.push({
                     x: x, y: y,
-                    vx: (Math.random() - 0.5) * 6,
-                    vy: (Math.random() - 0.5) * 6,
+                    vx: (Math.random() - 0.5) * 7,
+                    vy: (Math.random() - 0.5) * 7,
                     life: 25,
                     color: color
                 });
             }
         }
 
-        // Vòng lặp game chính (Game Loop)
+        // --- VẼ ĐỒ HỌA NGƯỜI QUE HOẠT HỌA ---
+        function drawStickman(x, y, color, isArcher, isMoving) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2.5;
+            ctx.fillStyle = color;
+
+            let legSwing = isMoving ? Math.sin(animFrame * 0.3) * 8 : 0;
+
+            // Đầu
+            ctx.beginPath();
+            ctx.arc(x, y - 14, 6, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Thân
+            ctx.beginPath();
+            ctx.moveTo(x, y - 8);
+            ctx.lineTo(x, y + 6);
+            ctx.stroke();
+
+            // Tay cầm vũ khí
+            ctx.beginPath();
+            ctx.moveTo(x, y - 4);
+            if (isArcher) {
+                ctx.lineTo(x + 10, y - 6); // Cung
+                ctx.stroke();
+                ctx.strokeStyle = '#d4af37';
+                ctx.beginPath(); ctx.arc(x + 10, y - 6, 8, -Math.PI/2, Math.PI/2); ctx.stroke();
+            } else {
+                ctx.lineTo(x + 10, y + 2); // Kiếm
+                ctx.stroke();
+            }
+
+            // Chân bước đi
+            ctx.strokeStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x, y + 6);
+            ctx.lineTo(x - 6, y + 18 + legSwing);
+            ctx.moveTo(x, y + 6);
+            ctx.lineTo(x + 6, y + 18 - legSwing);
+            ctx.stroke();
+        }
+
+        function drawMonster(x, y, type, hpRatio) {
+            ctx.fillStyle = type === 'goblin' ? '#2ecc71' : '#e74c3c';
+            ctx.strokeStyle = '#111';
+            ctx.lineWidth = 2;
+
+            // Thân quái to ngang người que
+            ctx.beginPath();
+            ctx.arc(x, y - 6, 11, 0, Math.PI * 2);
+            ctx.fill(); ctx.stroke();
+
+            // Sừng / Tai ác quỷ
+            if (type === 'orc') {
+                ctx.fillStyle = '#c0392b';
+                ctx.beginPath();
+                ctx.moveTo(x - 8, y - 14); ctx.lineTo(x - 14, y - 22); ctx.lineTo(x - 4, y - 16);
+                ctx.moveTo(x + 8, y - 14); ctx.lineTo(x + 14, y - 22); ctx.lineTo(x + 4, y - 16);
+                ctx.fill();
+            }
+
+            // Thanh máu quái
+            ctx.fillStyle = "#000";
+            ctx.fillRect(x - 16, y - 28, 32, 5);
+            ctx.fillStyle = "#2ecc71";
+            ctx.fillRect(x - 16, y - 28, hpRatio * 32, 5);
+        }
+
+        // --- VÒNG LẶP CHÍNH ---
         function gameLoop() {
-            // Xóa màn hình
+            animFrame++;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Vẽ địa hình (Đường đi & Thành trì)
-            ctx.fillStyle = "#3b5323";
-            ctx.fillRect(0, 100, canvas.width, 280);
-            
-            // Đường mòn
-            ctx.fillStyle = "#8c6747";
-            ctx.fillRect(0, 150, canvas.width, 180);
+            // Vẽ Đường mòn & Thành trì
+            ctx.fillStyle = "#8a623f";
+            ctx.fillRect(0, 100, canvas.width, 260);
 
-            // Căn cứ bên trái (Castle)
-            ctx.fillStyle = "#2c3e50";
-            ctx.fillRect(0, 80, 100, 320);
+            // Căn cứ bên trái (Castle Tower)
             ctx.fillStyle = "#34495e";
-            ctx.fillRect(80, 100, 30, 280);
+            ctx.fillRect(0, 60, 95, 340);
+            ctx.fillStyle = "#2c3e50";
+            ctx.fillRect(75, 80, 25, 300);
+            // Cờ thành
             ctx.fillStyle = "#e74c3c";
-            ctx.fillRect(35, 120, 30, 40); // Cờ thành
+            ctx.fillRect(30, 90, 30, 25);
 
-            // Tháp phòng thủ tự động
-            ctx.fillStyle = "#111";
-            ctx.fillRect(40, 40, 40, 60);
-            ctx.fillStyle = "#3498db";
-            ctx.beginPath(); ctx.arc(60, 50, 12, 0, Math.PI * 2); ctx.fill();
-
-            // Cổng quái vật bên phải (Demon Portal)
+            // Cổng ác quỷ bên phải
             ctx.fillStyle = "#4a154b";
-            ctx.beginPath(); ctx.arc(canvas.width - 40, 240, 45, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(canvas.width - 35, 230, 42, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = "#e81cff";
-            ctx.beginPath(); ctx.arc(canvas.width - 40, 240, 25, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(canvas.width - 35, 230, 22, 0, Math.PI * 2); ctx.fill();
 
-            // Cập nhật và vẽ Quái vật
+            // Cập nhật & vẽ Quái vật
             enemies.forEach((enemy, index) => {
                 if (freezeTimer <= 0) {
                     enemy.x -= enemy.speed;
                 }
 
-                // Quái đánh vào thành
-                if (enemy.x <= 100) {
-                    hp -= 10;
+                if (enemy.x <= 95) {
+                    hp -= 12;
                     enemies.splice(index, 1);
+                    playSound(100, 'sawtooth', 0.4);
                     updateUI();
                 }
 
-                // Vẽ quái
-                ctx.fillStyle = enemy.type === 'goblin' ? '#2ecc71' : '#e74c3c';
-                ctx.beginPath(); ctx.arc(enemy.x, enemy.y, 14, 0, Math.PI * 2); ctx.fill();
-                
-                // Thanh máu quái
-                ctx.fillStyle = "#000";
-                ctx.fillRect(enemy.x - 15, enemy.y - 22, 30, 5);
-                ctx.fillStyle = "#2ecc71";
-                ctx.fillRect(enemy.x - 15, enemy.y - 22, (enemy.hp / enemy.maxHp) * 30, 5);
+                drawMonster(enemy.x, enemy.y, enemy.type, enemy.hp / enemy.maxHp);
 
                 if (enemy.hp <= 0) {
                     enemies.splice(index, 1);
-                    gold += 25;
+                    gold += 30;
                     kills++;
-                    createParticles(enemy.x, enemy.y, '#f1c40f', 10);
+                    createParticles(enemy.x, enemy.y, '#f1c40f', 12);
+                    playSound(600, 'sine', 0.2);
                     updateUI();
                 }
             });
 
             if (freezeTimer > 0) freezeTimer--;
 
-            // Cập nhật và vẽ Lính phe ta
+            // Cập nhật & vẽ Lính người que phe ta
             units.forEach((unit) => {
-                ctx.fillStyle = unit.type === 'footman' ? '#2980b9' : '#e67e22';
-                ctx.fillRect(unit.x - 8, unit.y - 8, 16, 16);
-
-                // Lính tấn công quái gần nhất
-                if (unit.attackCooldown > 0) unit.attackCooldown--;
-                else {
-                    let target = enemies.find(e => Math.hypot(e.x - unit.x, e.y - unit.y) < 70);
+                let isMoving = true;
+                if (unit.attackCooldown > 0) {
+                    unit.attackCooldown--;
+                    isMoving = false;
+                } else {
+                    let target = enemies.find(e => Math.hypot(e.x - unit.x, e.y - unit.y) < 75);
                     if (target) {
-                        target.hp -= unit.type === 'footman' ? 12 : 18;
-                        createParticles(target.x, target.y, '#fff', 5);
-                        unit.attackCooldown = 40;
+                        target.hp -= unit.type === 'footman' ? 14 : 20;
+                        createParticles(target.x, target.y, '#ffffff', 6);
+                        playSound(350, 'square', 0.1);
+                        unit.attackCooldown = 35;
+                        isMoving = false;
                     }
                 }
+
+                let color = unit.type === 'footman' ? '#3498db' : '#f39c12';
+                drawStickman(unit.x, unit.y, color, unit.type === 'archer', isMoving);
             });
 
-            // Hiệu ứng hạt (Particles)
+            // Hiệu ứng hạt
             particles.forEach((p, index) => {
                 p.x += p.vx; p.y += p.vy; p.life--;
                 ctx.fillStyle = p.color;
@@ -255,13 +368,14 @@ game_html = """
                 if (p.life <= 0) particles.splice(index, 1);
             });
 
-            // Kiểm tra kết thúc game
+            // Màn hình kết thúc
             if (hp <= 0) {
+                stopBGM();
                 ctx.fillStyle = "rgba(0,0,0,0.85)";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = "red";
-                ctx.font = "bold 40px Arial";
-                ctx.fillText("THÀNH TRÌ ĐÃ THẤT THỦ!", canvas.width / 2 - 220, canvas.height / 2);
+                ctx.font = "bold 38px Arial";
+                ctx.fillText("THÀNH TRÌ ĐÃ THẤT THỦ!", canvas.width / 2 - 210, canvas.height / 2);
                 return;
             }
 
@@ -274,5 +388,4 @@ game_html = """
 </html>
 """
 
-# Nhúng game vào Streamlit
-st.components.v1.html(game_html, height=540, scrolling=False)
+st.components.v1.html(game_html, height=520, scrolling=False)
