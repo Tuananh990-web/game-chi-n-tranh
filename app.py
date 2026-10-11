@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.set_page_config(page_title="Kingdom War - Ultimate Tactical RTS", page_icon="⚔️", layout="wide")
+st.set_page_config(page_title="Kingdom War - Stick War 2 Edition", page_icon="⚔️", layout="wide")
 
 st.markdown("""
     <style>
@@ -9,15 +9,15 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("⚔️ Kingdom War: Đế Chế Người Que & Mỏ Vàng Chiến Thuật")
-st.markdown("Khai thác vàng, quản lý giới hạn dân số 100 quân, điều phối binh chủng chi tiết và chiến đấu với Cổng Quỷ!")
+st.title("⚔️ Stick War 2: Order Empire - Legend Edition")
+st.markdown("Quản lý thợ mỏ, điều khiển các chủng tộc người que, kích hoạt Kỹ Năng Tuyệt Chiêu & Mana để tiêu diệt Cổng Quỷ!")
 
 game_html = """
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Kingdom War Ultimate RTS</title>
+    <title>Stick War 2 Order Empire</title>
     <style>
         body { margin: 0; background: #111; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; overflow: hidden; }
         canvas { background: linear-gradient(to bottom, #1d3d1b, #2b5728); border: 4px solid #4a3319; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); cursor: crosshair; display: block; margin: 5px auto; }
@@ -32,7 +32,7 @@ game_html = """
 <body>
 
     <div class="stats">
-        🏰 Máu Thành: <span id="hpText">2000</span> | 🔮 Cổng Quỷ: <span id="portalHpText">2000</span> | 💰 Vàng: <span id="goldText">250</span> | 👥 Dân số: <span id="popText">0</span>/100 | ⚔️ Lệnh: <span id="cmdText" style="color:#2ecc71;">TẤN CÔNG</span>
+        🏰 Máu Thành: <span id="hpText">2000</span> | 🔮 Cổng Quỷ: <span id="portalHpText">2000</span> | 💰 Vàng: <span id="goldText">300</span> | 👥 Dân số: <span id="popText">0</span>/100 | ⚔️ Lệnh: <span id="cmdText" style="color:#2ecc71;">TẤN CÔNG</span>
     </div>
 
     <canvas id="gameCanvas" width="960" height="420"></canvas>
@@ -40,17 +40,17 @@ game_html = """
     <div class="cmd-panel">
         <button class="cmd-btn" onclick="setCommand('ATTACK')">⚔️ TẤN CÔNG</button>
         <button class="cmd-btn" onclick="setCommand('DEFEND')">🛡️ PHÒNG THỦ</button>
-        <button class="cmd-btn" onclick="setCommand('RETREAT')">🚩 RÚT VỀ THÀNH (HỒI MÁU)</button>
+        <button class="cmd-btn" onclick="setCommand('RETREAT')">🚩 RÚT VỀ THÀNH (HỒI 6 HP/S)</button>
         <button onclick="toggleAudio()">🔊 Bật/Tắt Âm Thanh</button>
     </div>
 
     <div class="ui-panel">
-        <button onclick="spawnUnit('miner')">⛏️ Thợ Mỏ (30g - 1 Slot)</button>
-        <button onclick="spawnUnit('footman')">🛡️ Kiếm Sĩ (40g - 1 Slot)</button>
-        <button onclick="spawnUnit('archer')">🏹 Cung Thủ (50g - 1 Slot)</button>
-        <button onclick="spawnUnit('lancer')">🗡️ Giáo Sĩ (70g - 3 Slot)</button>
-        <button onclick="spawnUnit('mage')">🧙 Pháp Sư (100g - 5 Slot)</button>
-        <button onclick="spawnUnit('giant')">🗿 Khổng Lồ (160g - 4 Slot)</button>
+        <button onclick="spawnUnit('miner')">⛏️ Miner (30g - 1 Pop)</button>
+        <button onclick="spawnUnit('footman')">⚔️ Swordwrath (40g - 1 Pop)</button>
+        <button onclick="spawnUnit('archer')">🏹 Archidon (50g - 1 Pop)</button>
+        <button onclick="spawnUnit('lancer')">🗡️ Spearton (70g - 3 Pop)</button>
+        <button onclick="spawnUnit('mage')">🧙 Magikill (100g - 5 Pop)</button>
+        <button onclick="spawnUnit('giant')">🗿 Giant (160g - 4 Pop)</button>
     </div>
 
     <script>
@@ -59,10 +59,10 @@ game_html = """
 
         let castleHp = 2000, castleMaxHp = 2000;
         let portalHp = 2000, portalMaxHp = 2000;
-        let gold = 250;
+        let gold = 300;
         let currentCommand = 'ATTACK';
 
-        let castleEnragedTimer = 0; // 15 giây (900 frame)
+        let castleEnragedTimer = 0; // 15 giây
         let portalEnragedTimer = 0;
 
         let units = [];
@@ -101,7 +101,7 @@ game_html = """
                 if (u.type === 'lancer') count += 3;
                 else if (u.type === 'mage') count += 5;
                 else if (u.type === 'giant') count += 4;
-                else count += 1; // miner, footman, archer, summon
+                else count += 1;
             });
             return count;
         }
@@ -113,24 +113,24 @@ game_html = """
                 let t = types[Math.floor(Math.random() * types.length)];
                 enemies.push(createEnemyObject(t));
             }
-        }, 1600);
+        }, 1500);
 
-        // Hồi máu 6 HP/s khi quân đứng gần thành (Lệnh Rút về) & Thợ mỏ kiếm vàng
+        // Khai thác mỏ vàng & hồi máu
         setInterval(() => {
             units.forEach(u => {
                 if (u.type === 'miner') {
-                    // Thợ mỏ đi tới mỏ vàng ở giữa (x: 450) khai thác
-                    if (Math.abs(u.x - 450) > 20) {
-                        u.x += u.x < 450 ? 1 : -1;
+                    if (Math.abs(u.x - 480) > 20) {
+                        u.x += u.x < 480 ? 1.5 : -1.5;
                     } else {
-                        gold += 5; // Khai thác mỏ vàng
+                        gold += 6; // Khai thác mỏ vàng
+                        createParticles(480, 220, '#ffd700', 3);
                     }
                 } else if (currentCommand === 'RETREAT' && u.x < 220 && u.hp < u.maxHp) {
                     u.hp = Math.min(u.maxHp, u.hp + 6);
                     createParticles(u.x, u.y - 10, '#2ecc71', 2);
                 }
             });
-            gold += 10; // Thuế thành định kỳ
+            gold += 12;
             updateUI();
         }, 1000);
 
@@ -153,12 +153,12 @@ game_html = """
 
         function createUnitObject(type) {
             let stats = {
-                miner:   { hp: 60,  dmg: 5,  range: 25, speed: 1.3, size: 0.8 },
-                footman: { hp: 120, dmg: 14, range: 35, speed: 1.2, size: 1 },
-                archer:  { hp: 80,  dmg: 18, range: 170, speed: 1.1, size: 1 },
-                lancer:  { hp: 150, dmg: 22, range: 60, speed: 1.0, size: 1.1 },
-                mage:    { hp: 90,  dmg: 30, range: 150, speed: 0.9, size: 1, summonCd: 0 },
-                giant:   { hp: 500, dmg: 45, range: 45, speed: 0.6, size: 1.8 }
+                miner:   { hp: 70,  dmg: 6,  range: 25, speed: 1.4, size: 0.8 },
+                footman: { hp: 130, dmg: 16, range: 35, speed: 1.3, size: 1 },
+                archer:  { hp: 85,  dmg: 19, range: 170, speed: 1.1, size: 1 },
+                lancer:  { hp: 160, dmg: 24, range: 60, speed: 1.0, size: 1.1 },
+                mage:    { hp: 95,  dmg: 32, range: 150, speed: 0.9, size: 1, summonCd: 0 },
+                giant:   { hp: 550, dmg: 50, range: 45, speed: 0.6, size: 1.8 }
             }[type];
 
             return {
@@ -171,10 +171,10 @@ game_html = """
 
         function createEnemyObject(type) {
             let stats = {
-                goblin:     { hp: 80,  dmg: 8,  range: 30, speed: 1.4, size: 0.9 },
-                orc:        { hp: 160, dmg: 16, range: 35, speed: 1.0, size: 1.2 },
-                demon_mage: { hp: 100, dmg: 24, range: 140, speed: 0.8, size: 1 },
-                troll:      { hp: 400, dmg: 38, range: 45, speed: 0.5, size: 1.7 }
+                goblin:     { hp: 85,  dmg: 9,  range: 30, speed: 1.4, size: 0.9 },
+                orc:        { hp: 170, dmg: 18, range: 35, speed: 1.0, size: 1.2 },
+                demon_mage: { hp: 110, dmg: 26, range: 140, speed: 0.8, size: 1 },
+                troll:      { hp: 420, dmg: 40, range: 45, speed: 0.5, size: 1.7 }
             }[type];
 
             return {
@@ -204,7 +204,7 @@ game_html = """
             }
         }
 
-        // --- HỌA TIẾT VẼ CHI TIẾT ---
+        // --- HỌA TIẾT ĐỒ HỌA ---
         function drawCastle() {
             ctx.fillStyle = "#2c3e50"; ctx.fillRect(0, 50, 140, 330);
             ctx.fillStyle = "#34495e";
@@ -224,7 +224,6 @@ game_html = """
         }
 
         function drawGoldMine() {
-            // Vẽ Mỏ Vàng & Thợ Mỏ ở giữa sân
             ctx.fillStyle = "#b5832a";
             ctx.beginPath(); ctx.arc(480, 230, 45, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = "#ffd700";
@@ -244,7 +243,6 @@ game_html = """
             }
         }
 
-        // Vẽ Nhân vật chi tiết theo đúng trang bị (Kiếm, Giáo khiên, Cung, Gậy phép, Chùy khổng lồ)
         function drawCustomCharacter(entity, isEnemy) {
             let x = entity.x, y = entity.y, s = entity.size;
             let color = isEnemy ? '#e74c3c' : '#3498db';
@@ -255,49 +253,39 @@ game_html = """
             ctx.save();
             ctx.translate(x, y);
 
-            // Đầu & Nón
             ctx.fillStyle = color; ctx.beginPath(); ctx.arc(0, -12 * s, 8 * s, 0, Math.PI * 2); ctx.fill();
             if (entity.type === 'lancer' || entity.type === 'footman') {
-                ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-7*s, -18*s, 14*s, 5*s); // Nón sắt
+                ctx.fillStyle = '#bdc3c7'; ctx.fillRect(-7*s, -18*s, 14*s, 5*s);
             }
             if (entity.type === 'mage') {
-                ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.moveTo(0, -25*s); ctx.lineTo(-8*s, -14*s); ctx.lineTo(8*s, -14*s); ctx.fill(); // Nón phép
+                ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.moveTo(0, -25*s); ctx.lineTo(-8*s, -14*s); ctx.lineTo(8*s, -14*s); ctx.fill();
             }
 
-            // Thân & Trang bị vũ khí sau lưng/tay
             ctx.strokeStyle = color; ctx.lineWidth = 3 * s;
             ctx.beginPath(); ctx.moveTo(0, -4 * s); ctx.lineTo(0, 10 * s); ctx.stroke();
 
             if (entity.type === 'archer') {
-                // Bao cung & Cung phía sau
                 ctx.strokeStyle = '#d4af37'; ctx.beginPath(); ctx.arc(6*s, -4*s, 8*s, 0, Math.PI); ctx.stroke();
             } else if (entity.type === 'lancer') {
-                // Giáo dài và khiên
                 ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.moveTo(8*s, -15*s); ctx.lineTo(15*s, 15*s); ctx.stroke();
-                ctx.fillStyle = '#2980b9'; ctx.fillRect(-12*s, -8*s, 6*s, 14*s); // Khiên
+                ctx.fillStyle = '#2980b9'; ctx.fillRect(-12*s, -8*s, 6*s, 14*s);
             } else if (entity.type === 'mage') {
-                // Gậy phép phát sáng
                 ctx.strokeStyle = '#e74c3c'; ctx.beginPath(); ctx.moveTo(10*s, -15*s); ctx.lineTo(10*s, 15*s); ctx.stroke();
                 ctx.fillStyle = '#00d2ff'; ctx.beginPath(); ctx.arc(10*s, -16*s, 4*s, 0, Math.PI*2); ctx.fill();
             } else if (entity.type === 'giant') {
-                // Gậy/Chùy to
                 ctx.strokeStyle = '#5a3d28'; ctx.lineWidth = 6*s;
                 ctx.beginPath(); ctx.moveTo(12*s, -20*s); ctx.lineTo(18*s, 20*s); ctx.stroke();
             } else if (entity.type === 'miner') {
-                // Cúp đào vàng
                 ctx.strokeStyle = '#bdc3c7'; ctx.beginPath(); ctx.moveTo(8*s, -10*s); ctx.lineTo(15*s, -5*s); ctx.stroke();
             } else {
-                // Kiếm sĩ cầm kiếm
                 ctx.strokeStyle = '#bdc3c7'; ctx.beginPath(); ctx.moveTo(8*s, -5*s); ctx.lineTo(14*s, 10*s); ctx.stroke();
             }
 
-            // Chân di chuyển
             let swing = Math.sin(animFrame * 0.2) * 6;
             ctx.strokeStyle = color; ctx.lineWidth = 3 * s;
             ctx.beginPath(); ctx.moveTo(0, 10 * s); ctx.lineTo(-6 * s, 20 * s + swing); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0, 10 * s); ctx.lineTo(6 * s, 20 * s - swing); ctx.stroke();
 
-            // Thanh Máu & Mana
             ctx.fillStyle = "#000"; ctx.fillRect(-15 * s, -30 * s, 30 * s, 4);
             ctx.fillStyle = "#2ecc71"; ctx.fillRect(-15 * s, -30 * s, (entity.hp / entity.maxHp) * 30 * s, 4);
             ctx.fillStyle = "#000"; ctx.fillRect(-15 * s, -25 * s, 30 * s, 3);
@@ -317,13 +305,11 @@ game_html = """
             drawGoldMine();
             drawDemonPortal();
 
-            // Đếm ngược hiệu ứng phẫn nộ 15 giây (900 frames)
             if (castleEnragedTimer > 0) castleEnragedTimer--;
             if (portalEnragedTimer > 0) portalEnragedTimer--;
 
-            // KÍCH HOẠT PHẪN NỘ KHI <50% MÁU (GIẢM 99% SÁT THƯƠNG TRONG 15 GIÂY & TRIỆU HỒI LÍNH/QUÁI)
             if (castleHp / castleMaxHp < 0.5 && castleEnragedTimer === 0) {
-                castleEnragedTimer = 900; // 15 giây
+                castleEnragedTimer = 900;
                 for(let i = 0; i < 30; i++) {
                     let types = ['footman', 'archer', 'lancer'];
                     units.push(createUnitObject(types[i % 3]));
@@ -332,7 +318,7 @@ game_html = """
             }
 
             if (portalHp / portalMaxHp < 0.5 && portalEnragedTimer === 0) {
-                portalEnragedTimer = 900; // 15 giây
+                portalEnragedTimer = 900;
                 for(let i = 0; i < 40; i++) {
                     let types = ['goblin', 'orc', 'demon_mage'];
                     enemies.push(createEnemyObject(types[i % 3]));
@@ -340,9 +326,9 @@ game_html = """
                 createParticles(canvas.width - 100, 200, '#e74c3c', 40);
             }
 
-            // XỬ LÝ QUÂN TA
+            // QUÂN TA
             units.forEach((u, uIdx) => {
-                if (u.type === 'miner') return; // Thợ mỏ tự khai thác vàng
+                if (u.type === 'miner') return;
 
                 let targetX = u.x;
                 if (currentCommand === 'ATTACK') targetX = canvas.width - 130;
@@ -354,10 +340,9 @@ game_html = """
                     u.x += u.x < targetX ? u.speed : -u.speed;
                 }
 
-                // Pháp sư triệu hồi lính yếu hỗ trợ
                 if (u.type === 'mage') {
                     u.summonCd = (u.summonCd || 0) + 1;
-                    if (u.summonCd >= 250 && getCurrentPopulation() < 98) {
+                    if (u.summonCd >= 240 && getCurrentPopulation() < 98) {
                         u.summonCd = 0;
                         units.push({
                             x: u.x + 10, y: u.y + (Math.random()*30 - 15),
@@ -377,7 +362,7 @@ game_html = """
                         createParticles(target.x, target.y, '#fff', 4);
                         u.attackCd = 30;
                     } else if (u.x >= canvas.width - 140) {
-                        let dmg = (portalEnragedTimer > 0) ? u.dmg * 0.01 : u.dmg; // Giảm 99% dame trong 15s
+                        let dmg = (portalEnragedTimer > 0) ? u.dmg * 0.01 : u.dmg;
                         portalHp -= dmg;
                         u.mana = Math.min(u.maxMana, u.mana + 15);
                         u.attackCd = 35;
@@ -385,17 +370,19 @@ game_html = """
                     }
                 }
 
+                // KÍCH HOẠT KỸ NĂNG NĂNG LỰC ĐẶC BIỆT KHI FULL MANA
                 if (u.mana >= u.maxMana) {
                     u.mana = 0; u.hp = Math.min(u.maxHp, u.hp + 60);
-                    enemies.forEach(e => { if (Math.hypot(e.x - u.x, e.y - u.y) < 130) e.hp -= 50; });
-                    createParticles(u.x, u.y, '#00d2ff', 25);
+                    enemies.forEach(e => { if (Math.hypot(e.x - u.x, e.y - u.y) < 130) e.hp -= 55; });
+                    createParticles(u.x, u.y, '#00d2ff', 30);
+                    playSound(650, 'sine', 0.3);
                 }
 
                 drawCustomCharacter(u, false);
                 if (u.hp <= 0) units.splice(uIdx, 1);
             });
 
-            // XỬ LÝ QUÁI VẬT
+            // QUÁI VẬT
             enemies.forEach((e, eIdx) => {
                 let unitNear = units.find(u => Math.hypot(u.x - e.x, u.y - e.y) <= e.range);
                 if (!unitNear && e.x > 140) { e.x -= e.speed; }
@@ -409,7 +396,7 @@ game_html = """
                         createParticles(target.x, target.y, '#e74c3c', 4);
                         e.attackCd = 32;
                     } else if (e.x <= 140) {
-                        let dmg = (castleEnragedTimer > 0) ? e.dmg * 0.01 : e.dmg; // Giảm 99% dame trong 15s
+                        let dmg = (castleEnragedTimer > 0) ? e.dmg * 0.01 : e.dmg;
                         castleHp -= dmg;
                         e.mana = Math.min(e.maxMana, e.mana + 15);
                         e.attackCd = 35;
