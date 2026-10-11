@@ -10,7 +10,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("⚔️ Stick War 2: Order Empire - Deluxe Edition")
-st.markdown("Chỉ huy quân đoàn Order Empire, khai thác vàng, nâng cấp binh chủng chiến đấu hoành tráng chống lại thế lực hắc ám!")
+st.markdown("Hệ thống 6 mỏ vàng nhỏ trước thành, thợ mỏ chuyên trách khai thác, quản lý dân số và điều binh khiển tướng!")
 
 game_html = """
 <!DOCTYPE html>
@@ -65,6 +65,16 @@ game_html = """
         let enemyStatueHp = 2500, enemyStatueMaxHp = 2500;
         let gold = 400;
         let currentCommand = 'ATTACK';
+
+        // 6 Mỏ vàng nhỏ đặt ngay trước thành (từ x: 160 đến 280)
+        let goldMines = [
+            { x: 170, y: 160, assignedMiner: null },
+            { x: 210, y: 220, assignedMiner: null },
+            { x: 250, y: 280, assignedMiner: null },
+            { x: 190, y: 320, assignedMiner: null },
+            { x: 230, y: 150, assignedMiner: null },
+            { x: 270, y: 200, assignedMiner: null }
+        ];
 
         let units = [];
         let enemies = [];
@@ -153,38 +163,6 @@ game_html = """
             }
         }, 1600);
 
-        // Khai thác vàng định kỳ
-        setInterval(() => {
-            units.forEach(u => {
-                if (u.type === 'miner') {
-                    if (u.state === 'going') {
-                        u.x += u.speed;
-                        if (u.x >= 480) u.state = 'mining';
-                    } else if (u.state === 'returning') {
-                        u.x -= u.speed;
-                        if (u.x <= 140) {
-                            gold += u.goldBag || 15;
-                            u.goldBag = 0;
-                            u.state = 'going';
-                            addFloatingText("+15 Vàng", 140, 200, '#ffd700');
-                        }
-                    } else if (u.state === 'mining') {
-                        u.goldBag = 15;
-                        u.state = 'returning';
-                    }
-                }
-            });
-            gold += 10;
-            updateUI();
-        }, 1000);
-
-        function updateUI() {
-            document.getElementById("hpText").innerText = Math.max(0, Math.floor(statueHp));
-            document.getElementById("enemyHpText").innerText = Math.max(0, Math.floor(enemyStatueHp));
-            document.getElementById("goldText").innerText = gold;
-            document.getElementById("popText").innerText = getCurrentPopulation();
-        }
-
         function createUnitObject(type) {
             let stats = {
                 miner:      { hp: 90,  dmg: 8,  range: 30, speed: 1.5, size: 0.9 },
@@ -195,12 +173,22 @@ game_html = """
                 giant:      { hp: 700, dmg: 65, range: 55, speed: 0.5, size: 1.9 }
             }[type];
 
-            return {
-                x: 140 + Math.random() * 20, y: 150 + Math.random() * 200,
+            let unit = {
+                x: 120, y: 150 + Math.random() * 200,
                 type: type, hp: stats.hp, maxHp: stats.hp,
                 dmg: stats.dmg, range: stats.range, speed: stats.speed, size: stats.size,
-                attackCd: 0, state: 'going', goldBag: 0, isSpinning: 0
+                attackCd: 0, state: 'going', goldBag: 0, isSpinning: 0, mineTarget: null
             };
+
+            // Nếu là thợ mỏ, tìm mỏ vàng nhỏ trống để gán
+            if (type === 'miner') {
+                let freeMine = goldMines.find(m => !m.assignedMiner);
+                if (freeMine) {
+                    freeMine.assignedMiner = unit;
+                    unit.mineTarget = freeMine;
+                }
+            }
+            return unit;
         }
 
         function createEnemyObject(type) {
@@ -230,7 +218,7 @@ game_html = """
             }
         }
 
-        // --- VẼ ĐỒ HỌA CAO CẤP (ARTISTIC RENDERER) ---
+        // --- VẼ ĐỒ HỌA MỎ VÀNG & TƯỢNG TRƯỚC THÀNH ---
         function drawStatuesAndEnvironment() {
             // Tượng chính Order Empire (Bên trái)
             ctx.fillStyle = "#d4af37";
@@ -239,10 +227,14 @@ game_html = """
             ctx.beginPath(); ctx.arc(75, 100, 35, Math.PI, 0, false); ctx.fill();
             ctx.fillStyle = "#fff"; ctx.font = "bold 11px Arial"; ctx.fillText("ORDER", 56, 215);
 
-            // Mỏ vàng trung tâm
-            ctx.fillStyle = "#27ae60"; ctx.beginPath(); ctx.arc(490, 230, 48, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(490, 230, 26, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = "#000"; ctx.font = "bold 11px Arial"; ctx.fillText("MỎ VÀNG", 456, 234);
+            // 6 Mỏ vàng nhỏ nằm ngay trước thành
+            goldMines.forEach((m, idx) => {
+                ctx.fillStyle = "#f1c40f";
+                ctx.beginPath(); ctx.arc(m.x, m.y, 16, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = "#b7950b"; ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = "#000"; ctx.font = "bold 9px Arial";
+                ctx.fillText("M" + (idx+1), m.x - 6, m.y + 3);
+            });
 
             // Tượng Thần Đen / Cổng Địch (Bên phải)
             ctx.fillStyle = "#512e5f";
@@ -264,28 +256,25 @@ game_html = """
             ctx.translate(x, y);
             if (entity.isSpinning > 0) ctx.rotate((50 - entity.isSpinning) * 0.4);
 
-            // Đầu & Mũ giáp chiến binh tinh xảo
             ctx.fillStyle = primaryColor; ctx.beginPath(); ctx.arc(0, -14 * s, 9 * s, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#ecf0f1';
             if (entity.type === 'swordwrath' || entity.type === 'spearton') {
-                ctx.fillRect(-7*s, -21*s, 14*s, 5*s); // Mũ giáp sắt
+                ctx.fillRect(-7*s, -21*s, 14*s, 5*s);
             } else if (entity.type === 'magikill' || entity.type === 'shadow_mage') {
-                ctx.beginPath(); ctx.moveTo(0, -28*s); ctx.lineTo(-9*s, -15*s); ctx.lineTo(9*s, -15*s); ctx.fill(); // Mũ chóp phép
+                ctx.beginPath(); ctx.moveTo(0, -28*s); ctx.lineTo(-9*s, -15*s); ctx.lineTo(9*s, -15*s); ctx.fill();
             }
 
-            // Áo giáp thân
             ctx.strokeStyle = primaryColor; ctx.lineWidth = 4 * s;
             ctx.beginPath(); ctx.moveTo(0, -5 * s); ctx.lineTo(0, 12 * s); ctx.stroke();
 
-            // Vũ khí chi tiết
             if (entity.type === 'archidon') {
                 ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(8*s, -4*s, 9*s, -Math.PI/2, Math.PI/2); ctx.stroke();
             } else if (entity.type === 'spearton') {
                 ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(10*s, -18*s); ctx.lineTo(16*s, 18*s); ctx.stroke();
-                ctx.fillStyle = '#34495e'; ctx.fillRect(-14*s, -10*s, 7*s, 16*s); // Khiên lớn
+                ctx.fillStyle = '#34495e'; ctx.fillRect(-14*s, -10*s, 7*s, 16*s);
             } else if (entity.type === 'magikill') {
                 ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(12*s, -18*s); ctx.lineTo(12*s, 18*s); ctx.stroke();
-                ctx.fillStyle = '#00ffff'; ctx.beginPath(); ctx.arc(12*s, -19*s, 5*s, 0, Math.PI*2); ctx.fill(); // Ngọc gậy phép
+                ctx.fillStyle = '#00ffff'; ctx.beginPath(); ctx.arc(12*s, -19*s, 5*s, 0, Math.PI*2); ctx.fill();
             } else if (entity.type === 'giant') {
                 ctx.strokeStyle = '#4e342e'; ctx.lineWidth = 7*s; ctx.beginPath(); ctx.moveTo(14*s, -22*s); ctx.lineTo(20*s, 22*s); ctx.stroke();
             } else if (entity.type === 'miner') {
@@ -297,50 +286,61 @@ game_html = """
                 ctx.strokeStyle = '#bdc3c7'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(10*s, -6*s); ctx.lineTo(16*s, 12*s); ctx.stroke();
             }
 
-            // Chân bước đi linh hoạt
             let legSwing = Math.sin(animFrame * 0.25) * 7;
             ctx.strokeStyle = primaryColor; ctx.lineWidth = 3.5 * s;
             ctx.beginPath(); ctx.moveTo(0, 12 * s); ctx.lineTo(-7 * s, 22 * s + legSwing); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0, 12 * s); ctx.lineTo(7 * s, 22 * s - legSwing); ctx.stroke();
 
-            // Thanh HP trên đầu
             ctx.fillStyle = "#000"; ctx.fillRect(-16 * s, -33 * s, 32 * s, 5);
             ctx.fillStyle = "#2ecc71"; ctx.fillRect(-16 * s, -33 * s, (entity.hp / entity.maxHp) * 32 * s, 5);
 
             ctx.restore();
         }
 
-        // --- GAME LOOP CHÍNH ---
+        // --- GAME LOOP ---
         function gameLoop() {
             animFrame++;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Nền chiến trường sắc nét
             ctx.fillStyle = "#4a3c2e"; ctx.fillRect(0, 120, canvas.width, 260);
 
             drawStatuesAndEnvironment();
 
-            // XỬ LÝ THỢ MỎ
-            units.filter(u => u.type === 'miner').forEach(u => {
-                if (u.state === 'going') {
-                    u.x += u.speed;
-                    if (u.x >= 475) u.state = 'mining';
-                } else if (u.state === 'returning') {
-                    u.x -= u.speed;
-                    if (u.x <= 130) {
-                        gold += u.goldBag || 15;
-                        u.goldBag = 0;
-                        u.state = 'going';
-                        addFloatingText("+15 Vàng", 130, 200, '#ffd700');
+            // XỬ LÝ THỢ MỎ ĐẾN TỪNG MỎ VÀNG NHỎ TRƯỚC THÀNH
+            units.filter(u => u.type === 'miner').forEach((u, idx) => {
+                if (u.mineTarget) {
+                    if (u.state === 'going') {
+                        let dx = u.mineTarget.x - u.x;
+                        let dy = u.mineTarget.y - u.y;
+                        let dist = Math.hypot(dx, dy);
+                        if (dist > 5) {
+                            u.x += (dx / dist) * u.speed;
+                            u.y += (dy / dist) * u.speed;
+                        } else {
+                            u.state = 'mining';
+                        }
+                    } else if (u.state === 'mining') {
+                        u.goldBag = 12;
+                        u.state = 'returning';
+                    } else if (u.state === 'returning') {
+                        let dx = 110 - u.x;
+                        let dy = 200 - u.y;
+                        let dist = Math.hypot(dx, dy);
+                        if (dist > 5) {
+                            u.x += (dx / dist) * u.speed;
+                            u.y += (dy / dist) * u.speed;
+                        } else {
+                            gold += u.goldBag || 12;
+                            u.goldBag = 0;
+                            u.state = 'going';
+                            addFloatingText("+12 Vàng", 110, 200, '#ffd700');
+                        }
                     }
-                } else if (u.state === 'mining') {
-                    u.goldBag = 15;
-                    u.state = 'returning';
                 }
                 drawCharacterModel(u, false);
             });
 
-            // XỬ LÝ QUÂN LÍNH CHIẾN ĐẤU
+            // XỬ LÝ QUÂN CHIẾN ĐẤU
             units.filter(u => u.type !== 'miner').forEach((u, uIdx) => {
                 if (u.isSpinning > 0) {
                     u.isSpinning--;
@@ -413,7 +413,6 @@ game_html = """
                 if (e.hp <= 0) { enemies.splice(eIdx, 1); gold += 25; addFloatingText("+25 Vàng", e.x, e.y, '#ffd700'); updateUI(); }
             });
 
-            // ĐẠN & HIỆU ỨNG TÊN BAY
             projectiles.forEach((p, pIdx) => {
                 p.x += p.vx; p.y += p.vy;
                 ctx.fillStyle = "#f1c40f"; ctx.fillRect(p.x, p.y, 8, 2);
@@ -423,7 +422,6 @@ game_html = """
                 }
             });
 
-            // CHỮ SỐ BAY (FLOATING TEXTS)
             floatingTexts.forEach((ft, idx) => {
                 ft.y -= 0.8; ft.alpha -= 0.02;
                 ctx.fillStyle = ft.color;
@@ -434,7 +432,6 @@ game_html = """
                 if (ft.alpha <= 0) floatingTexts.splice(idx, 1);
             });
 
-            // KIỂM TRA THẮNG THUA
             if (statueHp <= 0 || enemyStatueHp <= 0) {
                 ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = statueHp > 0 ? "#2ecc71" : "#e74c3c";
