@@ -1,7 +1,7 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="Stick War 2: Order Empire - Final Working Edition",
+    page_title="Stick War 2: Order Empire - Complete Masterpiece Edition",
     page_icon="⚔️",
     layout="wide"
 )
@@ -11,17 +11,19 @@ st.markdown("""
     .stApp { background-color: #06090f; color: #ffffff; font-family: 'Segoe UI', Tahoma, sans-serif; }
     iframe { border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.95); }
     .title-text { text-align: center; color: #ffcc00; text-transform: uppercase; font-weight: 800; margin-bottom: 0px; }
+    .sub-text { text-align: center; color: #aaaaaa; font-size: 14px; margin-bottom: 10px; }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1 class='title-text'>⚔️ STICK WAR 2: ORDER EMPIRE ⚔️</h1>", unsafe_allow_html=True)
+st.markdown("<h1 class='title-text'>⚔️ STICK WAR 2: ORDER EMPIRE - MASTER EDITION ⚔️</h1>", unsafe_allow_html=True)
+st.markdown("<p class='sub-text'>Complete RTS Strategy Engine | 6 Gold Mines, Flash 2D Art Style, Mission Briefing & Balanced Combat</p>", unsafe_allow_html=True)
 
 game_html = """
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Stick War 2 Working</title>
+    <title>Stick War 2 Master Edition</title>
     <style>
         body { margin: 0; background: #06090f; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; overflow: hidden; }
         canvas { background: linear-gradient(to bottom, #5cb85c 0%, #4cae4c 70%, #398439 100%); border: 4px solid #2e6b2e; border-radius: 8px; box-shadow: 0 12px 35px rgba(0,0,0,0.95); display: block; margin: 4px auto; }
@@ -67,7 +69,9 @@ game_html = """
         let gold = 400;
         let currentCommand = 'ATTACK';
         let gameOver = false;
+        let showBriefing = true; // Bảng cuộn giấy cốt truyện ban đầu
 
+        // 6 mỏ vàng nhỏ phân bổ ngay trước thành Order Empire
         let goldMines = [
             { x: 140, y: 150 }, { x: 190, y: 210 }, { x: 240, y: 280 },
             { x: 160, y: 330 }, { x: 210, y: 120 }, { x: 260, y: 180 }
@@ -96,7 +100,7 @@ game_html = """
         }
 
         function triggerSkill(type) {
-            if (gameOver) return;
+            if (showBriefing || gameOver) return;
             if (type === 'spin') {
                 units.filter(u => u.type === 'swordwrath').forEach(u => {
                     u.isSpinning = 40;
@@ -110,26 +114,38 @@ game_html = """
             }
         }
 
-        // Tự sinh quái địch
+        // Click để đóng cuộn giấy cốt truyện (Bấm nút OK)
+        canvas.addEventListener('click', function(event) {
+            if (showBriefing) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = event.clientX - rect.left;
+                const mouseY = event.clientY - rect.top;
+                if (mouseX >= canvas.width/2 - 50 && mouseX <= canvas.width/2 + 50 && mouseY >= 270 && mouseY <= 310) {
+                    showBriefing = false;
+                }
+            }
+        });
+
+        // Tự sinh quái địch theo đợt
         setInterval(() => {
-            if (!gameOver && enemyStatueHp > 0 && enemies.length < 25) {
+            if (!showBriefing && !gameOver && enemyStatueHp > 0 && enemies.length < 25) {
                 enemies.push({
-                    x: canvas.width - 80, y: 160 + Math.random() * 180,
+                    x: canvas.width - 80, y: 150 + Math.random() * 200,
                     type: Math.random() > 0.5 ? 'orc' : 'goblin',
                     hp: 120, maxHp: 120, dmg: 15, range: 35, speed: 1.0, size: 1.1, attackCd: 0
                 });
             }
-        }, 3000);
+        }, 3500);
 
         function spawnUnit(type) {
-            if (gameOver) return;
+            if (showBriefing || gameOver) return;
             let costs = { miner: 30, swordwrath: 40, archidon: 50, spearton: 70, magikill: 100, giant: 160 };
             let pops = { miner: 1, swordwrath: 1, archidon: 1, spearton: 3, magikill: 5, giant: 4 };
 
             if (gold >= costs[type] && getCurrentPopulation() + pops[type] <= 100) {
                 gold -= costs[type];
                 units.push({
-                    x: 80, y: 160 + Math.random() * 180,
+                    x: 80, y: 150 + Math.random() * 200,
                     type: type, hp: 150, maxHp: 150, dmg: 20, range: 40,
                     speed: 1.2, size: 1.0, attackCd: 0, goldBag: 0, state: 'going'
                 });
@@ -145,7 +161,6 @@ game_html = """
         }
 
         function drawScene() {
-            // Nền cỏ xanh
             ctx.fillStyle = "#5cb85c"; ctx.fillRect(0, 100, canvas.width, 300);
             ctx.fillStyle = "#4cae4c"; ctx.fillRect(0, 100, canvas.width, 6);
 
@@ -153,7 +168,7 @@ game_html = """
             ctx.fillStyle = "#d4af37"; ctx.fillRect(15, 60, 45, 260);
             ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(37, 55, 18, 0, Math.PI*2); ctx.fill();
 
-            // 6 Mỏ vàng nhỏ trước thành
+            // 6 Mỏ vàng nhỏ
             goldMines.forEach((m, idx) => {
                 ctx.fillStyle = "#f1c40f";
                 ctx.beginPath(); ctx.arc(m.x, m.y, 14, 0, Math.PI*2); ctx.fill();
@@ -167,23 +182,60 @@ game_html = """
             ctx.fillStyle = "#922b21"; ctx.beginPath(); ctx.arc(canvas.width - 37, 55, 18, 0, Math.PI*2); ctx.fill();
         }
 
+        function drawBriefingScroll() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "#f4e8c1";
+            ctx.fillRect(150, 60, canvas.width - 300, 280);
+
+            ctx.fillStyle = "#8b5a2b";
+            ctx.fillRect(135, 50, 25, 300);
+            ctx.fillRect(canvas.width - 160, 50, 25, 300);
+
+            ctx.strokeStyle = "#b59e67"; ctx.lineWidth = 3;
+            ctx.strokeRect(150, 60, canvas.width - 300, 280);
+
+            ctx.fillStyle = "#111"; ctx.font = "bold 26px 'Segoe UI'";
+            ctx.textAlign = "center";
+            ctx.fillText("Kiếm sĩ Phản công", canvas.width / 2, 115);
+
+            ctx.font = "14px 'Segoe UI'";
+            ctx.fillText("Trong nỗ lực giành lại đất đai, lượng Kiếm sĩ còn lại đang dồn toàn", canvas.width / 2, 160);
+            ctx.fillText("lực còn lại để tấn công bạn!", canvas.width / 2, 185);
+
+            ctx.fillStyle = "#c0392b"; ctx.font = "bold 15px 'Segoe UI'";
+            ctx.fillText("Hãy vượt qua cuộc phản công của Kiếm sĩ", canvas.width / 2, 235);
+
+            ctx.fillStyle = "#1b4f72";
+            ctx.fillRect(canvas.width / 2 - 50, 275, 100, 36);
+            ctx.strokeStyle = "#5dade2"; ctx.lineWidth = 2;
+            ctx.strokeRect(canvas.width / 2 - 50, 275, 100, 36);
+
+            ctx.fillStyle = "#fff"; ctx.font = "bold 16px 'Segoe UI'";
+            ctx.fillText("OK", canvas.width / 2, 298);
+            ctx.textAlign = "left";
+        }
+
         function drawCharacter(entity, isEnemy) {
             ctx.save();
             ctx.translate(entity.x, entity.y);
             let color = isEnemy ? '#e74c3c' : '#3498db';
             if (entity.type === 'miner') color = '#f39c12';
+            if (entity.type === 'spearton') color = '#2980b9';
 
-            // Đầu đen tròn hoàn toàn, không có mặt
+            // Đầu đen tròn hoàn toàn chuẩn phong cách Flash Stick War
             ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(0, -14, 6, 0, Math.PI*2); ctx.fill();
-            // Thân
+            if (entity.type === 'spearton') {
+                ctx.fillStyle = "#c0392b"; ctx.fillRect(-7, -23, 14, 5); // Mũ lông đỏ
+            }
+
             ctx.strokeStyle = color; ctx.lineWidth = 3.5;
             ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(0, 8); ctx.stroke();
-            // Chân
             let swing = Math.sin(animFrame * 0.3) * 5;
             ctx.beginPath(); ctx.moveTo(0, 8); ctx.lineTo(-4, 18 + swing); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0, 8); ctx.lineTo(4, 18 - swing); ctx.stroke();
 
-            // Thanh máu
             ctx.fillStyle = "#000"; ctx.fillRect(-12, -28, 24, 3);
             ctx.fillStyle = isEnemy ? "#e74c3c" : "#2ecc71";
             ctx.fillRect(-12, -28, (entity.hp / entity.maxHp) * 24, 3);
@@ -204,7 +256,13 @@ game_html = """
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawScene();
 
-            // Thợ mỏ
+            if (showBriefing) {
+                drawBriefingScroll();
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            // Xử lý thợ mỏ tại 6 mỏ vàng nhỏ
             units.forEach((u, idx) => {
                 if (u.type === 'miner') {
                     if (u.state === 'going') {
@@ -213,7 +271,7 @@ game_html = """
                     } else {
                         u.x -= 1.5;
                         if (u.x <= 70) {
-                            gold += 10;
+                            gold += 12;
                             u.state = 'going';
                             updateUI();
                         }
@@ -246,9 +304,9 @@ game_html = """
                 if (u.hp <= 0) units.splice(idx, 1);
             });
 
-            // Quái
+            // Xử lý quái vật
             enemies.forEach((e, idx) => {
-                let nearestUnit = units.find(u => u.type !== 'miner' && Math.abs(u.x - e.x) <= u.range);
+                let nearestUnit = units.find(u => u.type !== 'miner' && Math.abs(u.x - e.x) <= e.range);
                 if (nearestUnit) {
                     if (e.attackCd > 0) e.attackCd--;
                     else {
@@ -291,4 +349,4 @@ game_html = """
 </html>
 """
 
-st.components.v1.html(game_html, height=520, scrolling=False)
+st.components.v1.html(game_html, height=530, scrolling=False)
