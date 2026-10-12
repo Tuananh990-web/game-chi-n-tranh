@@ -1,70 +1,95 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="Stick War 2: Order Empire - Final Ultimate Edition",
-    page_icon="⚔️",
+    page_title="Kháng Chiến Việt Nam - Nhạc Cách Mạng Remix",
+    page_icon="⭐",
     layout="wide"
 )
 
 st.markdown("""
     <style>
-    .stApp { background-color: #020408; color: #ffffff; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    .stApp { background-color: #0d1b1e; color: #ffffff; font-family: 'Segoe UI', Tahoma, sans-serif; }
     iframe { border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.98); }
-    .title-text { text-align: center; color: #ffcc00; text-transform: uppercase; font-weight: 900; letter-spacing: 2px; }
-    .sub-text { text-align: center; color: #888888; font-size: 13px; margin-bottom: 10px; }
+    .title-text { text-align: center; color: #f1c40f; text-transform: uppercase; font-weight: 900; letter-spacing: 2px; }
+    .sub-text { text-align: center; color: #a3e4d7; font-size: 13px; margin-bottom: 10px; }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1 class='title-text'>⚔️ STICK WAR 2: ORDER EMPIRE - FINAL ULTIMATE ⚔️</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-text'>Responsive Controls | Dynamic Evolution Armor | Unique Class Colors | Particle FX & Tactical RTS Engine</p>", unsafe_allow_html=True)
+st.markdown("<h1 class='title-text'>⭐ KHÁNG CHIẾN VIỆT NAM - ÂM HƯỞNG HÀO HÙNG ⭐</h1>", unsafe_allow_html=True)
+st.markdown("<p class='sub-text'>Bảo vệ Tổ quốc kết hợp kho tàng nhạc cách mạng truyền thống và remix sôi động!</p>", unsafe_allow_html=True)
 
 game_html = """
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Stick War 2 Final Ultimate</title>
+    <title>Khang Chien Viet Nam - Music Edition</title>
     <style>
-        body { margin: 0; background: #020408; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; overflow: hidden; }
-        canvas { background: linear-gradient(to bottom, #5cb85c 0%, #4cae4c 70%, #398439 100%); border: 4px solid #2e6b2e; border-radius: 10px; box-shadow: 0 15px 40px rgba(0,0,0,0.95); display: block; margin: 4px auto; }
+        body { margin: 0; background: #0d1b1e; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; overflow: hidden; }
+        canvas { background: linear-gradient(to bottom, #27ae60 0%, #1e8449 70%, #145a32 100%); border: 4px solid #145a32; border-radius: 10px; box-shadow: 0 15px 40px rgba(0,0,0,0.95); display: block; margin: 4px auto; }
         .ui-panel { display: flex; justify-content: center; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
         .cmd-panel { display: flex; justify-content: center; gap: 6px; margin-top: 4px; }
-        button { background: #795548; color: #fff; border: 2px solid #ffcc00; padding: 6px 11px; font-weight: bold; font-size: 11px; border-radius: 4px; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
-        button:hover { background: #8d6e63; transform: scale(1.05); }
+        .music-panel { display: flex; justify-content: center; gap: 8px; margin-top: 6px; background: #112a2e; padding: 6px; border-radius: 6px; border: 1px solid #f1c40f; width: fit-content; margin-left: auto; margin-right: auto; }
+        button { background: #7d6608; color: #fff; border: 2px solid #f1c40f; padding: 6px 11px; font-weight: bold; font-size: 11px; border-radius: 4px; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+        button:hover { background: #b7950b; transform: scale(1.05); }
         button:active { transform: scale(0.95); }
-        .cmd-btn { background: #01579b; border-color: #4fc3f7; }
-        .skill-btn { background: #4a148c; border-color: #ffb74d; }
-        .tech-btn { background: #1b5e20; border-color: #81c784; }
-        .stats { font-size: 13px; font-weight: bold; color: #ffcc00; margin-bottom: 3px; }
+        .cmd-btn { background: #1b4f72; border-color: #5dade2; }
+        .skill-btn { background: #512e5f; border-color: #f39c12; }
+        .tech-btn { background: #145a32; border-color: #2ecc71; }
+        .music-btn { background: #900C3F; border-color: #FFC300; }
+        .stats { font-size: 13px; font-weight: bold; color: #f1c40f; margin-bottom: 3px; }
     </style>
 </head>
 <body>
 
     <div class="stats">
-        🏰 ORDER HP: <span id="hpText">3000</span> | 👹 EMPIRE HP: <span id="enemyHpText">3000</span> | 💰 GOLD: <span id="goldText">450</span> | 👥 POP: <span id="popText">0</span>/100 | 💎 TECH CẤP: <span id="techText">1</span>
+        🏛️ CĂN CỨ KHÁNG CHIẾN: <span id="hpText">3000</span> | ⚔️ ĐỒNG BÀO/ĐỊCH: <span id="enemyHpText">3000</span> | 🌾 LƯƠNG THỰC: <span id="goldText">450</span> | 👥 QUÂN SỐ: <span id="popText">0</span>/100 | 🎖️ CẤP HUÂN CHƯƠNG: <span id="techText">1</span>
     </div>
 
-    <canvas id="gameCanvas" width="980" height="400"></canvas>
+    <canvas id="gameCanvas" width="980" height="380"></canvas>
+
+    <!-- TRÌNH PHÁT NHẠC CÁCH MẠNG & REMIX -->
+    <div class="music-panel">
+        <span style="font-size:12px; font-weight:bold; color:#f1c40f; align-self:center;">🎵 NHẠC HÀO HÙNG:</span>
+        <button class="music-btn" onclick="playMusic('https://upload.wikimedia.org/wikipedia/commons/e/e5/Tien_Quan_Ca_instrumental.ogg')">🎶 Tiến Quân Ca</button>
+        <button class="music-btn" onclick="playMusic('https://actions.google.com/sounds/v1/ambiences/military_march.ogg')">📯 Hành Khúc Quân Đội</button>
+        <button class="music-btn" onclick="stopMusic()">🔇 Tắt Nhạc</button>
+    </div>
 
     <div class="cmd-panel">
         <button class="cmd-btn" id="btnAttack">⚔️ TẤN CÔNG</button>
         <button class="cmd-btn" id="btnDefend">🛡️ PHÒNG THỦ</button>
-        <button class="cmd-btn" id="btnHold">🛑 GIỮ VỊ TRÍ</button>
-        <button class="tech-btn" id="btnTech">⬆️ NÂNG CẤP GIÁP & SÁT THƯƠNG (150G)</button>
-        <button class="skill-btn" id="btnSpin">🌀 BÃO KIẾM</button>
-        <button class="skill-btn" id="btnEarth">💥 ĐỘNG ĐẤT</button>
+        <button class="cmd-btn" id="btnHold">🛑 BÁM TRỤ</button>
+        <button class="tech-btn" id="btnTech">⬆️ NÂNG CẤP VŨ KHÍ (150G)</button>
+        <button class="skill-btn" id="btnSpin">🌀 XUNG PHONG</button>
+        <button class="skill-btn" id="btnEarth">💥 PHÁO KÍCH</button>
     </div>
 
     <div class="ui-panel">
-        <button id="spawnMiner">⛏️ Miner (30g)</button>
-        <button id="spawnSwordwrath">⚔️ Swordwrath (40g)</button>
-        <button id="spawnArchidon">🏹 Archidon (50g)</button>
-        <button id="spawnSpearton">🛡️ Spearton (70g)</button>
-        <button id="spawnMagikill">🧙 Magikill (100g)</button>
-        <button id="spawnGiant">🗿 Giant (160g)</button>
+        <button id="spawnMiner">🌾 Dân Quân (30g)</button>
+        <button id="spawnSwordwrath">🗡️ Du Kích Cận Chiến (40g)</button>
+        <button id="spawnArchidon">🏹 Du Kích Bắn Tỉa (50g)</button>
+        <button id="spawnSpearton">🛡️ Tự Vệ Thép (70g)</button>
+        <button id="spawnMagikill">⭐ Cán Bộ Chỉ Huy (100g)</button>
+        <button id="spawnGiant">🚜 Xe Thồ Hỏa Lực (160g)</button>
     </div>
 
     <script>
+        // Trình phát nhạc nền
+        let bgAudio = new Audio();
+        bgAudio.loop = true;
+        bgAudio.volume = 0.5;
+
+        function playMusic(url) {
+            bgAudio.src = url;
+            bgAudio.play().catch(e => console.log("Audio play blocked by browser policy"));
+        }
+
+        function stopMusic() {
+            bgAudio.pause();
+            bgAudio.currentTime = 0;
+        }
+
         class ParticleSystem {
             constructor() { this.particles = []; }
             emit(x, y, color, count = 15) {
@@ -100,40 +125,30 @@ game_html = """
                 ctx.translate(this.x, this.y);
                 if (this.isSpinning > 0) ctx.rotate((50 - this.isSpinning) * 0.5);
 
-                // MÀU SẮC RIÊNG BỎ MỖI BÌNH CHỦNG ĐỂ DỄ NHẬN DẠNG
-                let unitColor = '#3498db'; // Mặc định Kiếm sĩ Xanh Lam
-                if (this.isEnemy) unitColor = '#e74c3c';
+                let unitColor = '#27ae60';
+                if (this.isEnemy) unitColor = '#c0392b';
                 else {
-                    if (this.type === 'miner') unitColor = '#f39c12';      // Cam Vàng
-                    else if (this.type === 'archidon') unitColor = '#2ecc71';   // Xanh Lá
-                    else if (this.type === 'spearton') unitColor = '#1f618d';   // Xanh Dương Đậm
-                    else if (this.type === 'magikill') unitColor = '#8e44ad';   // Tím Thạch Anh
-                    else if (this.type === 'giant') unitColor = '#6d4c41';      // Nâu Đất
+                    if (this.type === 'miner') unitColor = '#d35400';
+                    else if (this.type === 'archidon') unitColor = '#229954';
+                    else if (this.type === 'spearton') unitColor = '#117a65';
+                    else if (this.type === 'magikill') unitColor = '#f1c40f';
+                    else if (this.type === 'giant') unitColor = '#78281f';
                 }
 
-                // Đầu đen tròn hoàn toàn phẳng chuẩn Flash Stick War
                 ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(0, -14 * this.size, 6 * this.size, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = "#27ae60"; ctx.fillRect(-7 * this.size, -22 * this.size, 14 * this.size, 4 * this.size);
 
-                // NÂNG CẤP GIÁP VÀ NGOẠI HÌNH THEO CẤP CÔNG NGHỆ
                 if (!this.isEnemy && this.techLevel > 1) {
-                    ctx.fillStyle = this.techLevel === 2 ? "#bdc3c7" : "#f1c40f"; // Cấp 2 Giáp Bạc, Cấp 3 Giáp Vàng
-                    ctx.fillRect(-5 * this.size, -12 * this.size, 10 * this.size, 8 * this.size); // Áo Giáp
+                    ctx.fillStyle = this.techLevel === 2 ? "#bdc3c7" : "#f1c40f";
+                    ctx.fillRect(-5 * this.size, -12 * this.size, 10 * this.size, 8 * this.size);
                 }
 
-                if (this.type === 'spearton') {
-                    ctx.fillStyle = "#c0392b"; ctx.fillRect(-7 * this.size, -23 * this.size, 14 * this.size, 5 * this.size); // Mũ chùm lông đỏ
-                } else if (this.type === 'magikill') {
-                    ctx.fillStyle = "#4a148c"; ctx.beginPath(); ctx.moveTo(0, -28 * this.size); ctx.lineTo(-7 * this.size, -16 * this.size); ctx.lineTo(7 * this.size, -16 * this.size); ctx.fill(); // Mũ Phù Thủy
-                }
-
-                // Thân & Chân
                 ctx.strokeStyle = unitColor; ctx.lineWidth = 3.5 * this.size;
                 ctx.beginPath(); ctx.moveTo(0, -8 * this.size); ctx.lineTo(0, 8 * this.size); ctx.stroke();
                 let swing = Math.sin(animFrame * 0.3) * 5;
                 ctx.beginPath(); ctx.moveTo(0, 8 * this.size); ctx.lineTo(-5 * this.size, 18 * this.size + swing); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(0, 8 * this.size); ctx.lineTo(5 * this.size, 18 * this.size - swing); ctx.stroke();
 
-                // Thanh Máu
                 ctx.fillStyle = "#000"; ctx.fillRect(-12 * this.size, -28 * this.size, 24 * this.size, 3.5);
                 ctx.fillStyle = this.isEnemy ? "#e74c3c" : "#2ecc71";
                 ctx.fillRect(-12 * this.size, -28 * this.size, (this.hp / this.maxHp) * 24 * this.size, 3.5);
@@ -151,19 +166,18 @@ game_html = """
                 this.animFrame = 0;
                 this.particles = new ParticleSystem();
                 this.goldMines = [
-                    { x: 150, y: 140, miner: null }, { x: 200, y: 200, miner: null }, { x: 250, y: 270, miner: null },
-                    { x: 170, y: 320, miner: null }, { x: 220, y: 120, miner: null }, { x: 270, y: 180, miner: null }
+                    { x: 150, y: 130, miner: null }, { x: 200, y: 180, miner: null }, { x: 250, y: 240, miner: null },
+                    { x: 170, y: 290, miner: null }, { x: 220, y: 110, miner: null }, { x: 270, y: 160, miner: null }
                 ];
                 this.units = []; this.enemies = []; this.floatingTexts = [];
                 this.initListeners();
             }
             initListeners() {
-                // SỰ KIỆN CLICK CHUỘT VÀ BẤM NÚT ĐẢM BẢO NHẠY 100%
                 this.canvas.addEventListener('click', (e) => {
                     if (this.showBriefing) {
                         const rect = this.canvas.getBoundingClientRect();
                         const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top;
-                        if (mouseX >= this.canvas.width / 2 - 55 && mouseX <= this.canvas.width / 2 + 55 && mouseY >= 270 && mouseY <= 315) {
+                        if (mouseX >= this.canvas.width / 2 - 55 && mouseX <= this.canvas.width / 2 + 55 && mouseY >= 250 && mouseY <= 295) {
                             this.showBriefing = false;
                         }
                     }
@@ -184,7 +198,7 @@ game_html = """
                 document.getElementById('spawnGiant').onclick = () => this.spawnUnit('giant');
             }
             setCommand(cmd) { this.currentCommand = cmd; }
-            addFloatingText(text, x, y, color = '#ffcc00') {
+            addFloatingText(text, x, y, color = '#f1c40f') {
                 this.floatingTexts.push({ text, x, y, alpha: 1.0, color });
             }
             getCurrentPopulation() {
@@ -208,8 +222,8 @@ game_html = """
                         u.maxHp = Math.floor(u.maxHp * 1.25);
                         u.hp = u.maxHp;
                     });
-                    this.particles.emit(this.canvas.width / 2, 200, '#81c784', 35);
-                    this.addFloatingText("⬆️ GIÁP & TĂNG TĂNG SÁT THƯƠNG (CẤP " + this.techLevel + ")!", this.canvas.width / 2, 100, '#81c784');
+                    this.particles.emit(this.canvas.width / 2, 180, '#2ecc71', 35);
+                    this.addFloatingText("⭐ CẢI TIẾN VŨ KHÍ THÀNH CÔNG (CẤP " + this.techLevel + ")!", this.canvas.width / 2, 90, '#2ecc71');
                     this.updateUI();
                 }
             }
@@ -218,16 +232,16 @@ game_html = """
                 if (type === 'spin') {
                     this.units.filter(u => u.type === 'swordwrath').forEach(u => {
                         u.isSpinning = 50;
-                        this.particles.emit(u.x, u.y, '#4fc3f7', 20);
-                        this.addFloatingText("Bão Kiếm!", u.x, u.y - 25, '#4fc3f7');
+                        this.particles.emit(u.x, u.y, '#f1c40f', 20);
+                        this.addFloatingText("Xung Phong!", u.x, u.y - 25, '#f1c40f');
                     });
                 } else if (type === 'earthquake') {
                     this.screenShake = 30;
-                    this.particles.emit(this.canvas.width / 2, this.canvas.height / 2, '#ffb74d', 50);
+                    this.particles.emit(this.canvas.width / 2, this.canvas.height / 2, '#e74c3c', 50);
                     this.enemies.forEach(e => {
                         e.hp -= (90 * this.techLevel);
-                        this.particles.emit(e.x, e.y, '#e53935', 10);
-                        this.addFloatingText("-" + (90 * this.techLevel) + " Động Đất", e.x, e.y, '#e53935');
+                        this.particles.emit(e.x, e.y, '#e74c3c', 10);
+                        this.addFloatingText("-" + (90 * this.techLevel) + " Pháo Kích", e.x, e.y, '#e74c3c');
                     });
                 }
             }
@@ -246,7 +260,7 @@ game_html = """
 
                 if (this.gold >= costs[type] && this.getCurrentPopulation() + pops[type] <= 100) {
                     this.gold -= costs[type];
-                    let unit = new GameObject(80, 140 + Math.random() * 200, type, false, {
+                    let unit = new GameObject(80, 130 + Math.random() * 180, type, false, {
                         hp: stats.hp * (1 + (this.techLevel - 1) * 0.25),
                         dmg: stats.dmg * (1 + (this.techLevel - 1) * 0.3),
                         range: stats.range, speed: stats.speed, size: stats.size
@@ -258,7 +272,7 @@ game_html = """
                         else { unit.mineTarget = this.goldMines[0]; }
                     }
                     this.units.push(unit);
-                    this.particles.emit(unit.x, unit.y, '#4fc3f7', 10);
+                    this.particles.emit(unit.x, unit.y, '#f1c40f', 10);
                     this.updateUI();
                 }
             }
@@ -269,44 +283,41 @@ game_html = """
                 document.getElementById("popText").innerText = this.getCurrentPopulation();
             }
             drawScene() {
-                this.ctx.fillStyle = "#5cb85c"; this.ctx.fillRect(0, 100, this.canvas.width, 300);
-                this.ctx.fillStyle = "#4cae4c"; this.ctx.fillRect(0, 100, this.canvas.width, 6);
+                this.ctx.fillStyle = "#27ae60"; this.ctx.fillRect(0, 90, this.canvas.width, 290);
+                this.ctx.fillStyle = "#1e8449"; this.ctx.fillRect(0, 90, this.canvas.width, 6);
 
-                // Tượng Order
-                this.ctx.fillStyle = "#d4af37"; this.ctx.fillRect(15, 60, 45, 260);
-                this.ctx.fillStyle = "#f1c40f"; this.ctx.beginPath(); this.ctx.arc(37, 55, 18, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.fillStyle = "#b7950b"; this.ctx.fillRect(15, 50, 45, 240);
+                this.ctx.fillStyle = "#f1c40f"; this.ctx.beginPath(); this.ctx.arc(37, 45, 18, 0, Math.PI * 2); this.ctx.fill();
 
-                // 6 Mỏ vàng nhỏ
                 this.goldMines.forEach((m, idx) => {
                     this.ctx.fillStyle = "#f1c40f";
-                    this.ctx.beginPath(); this.ctx.arc(m.x, m.y, 14, 0, Math.PI * 2); this.ctx.fill();
+                    this.ctx.beginPath(); this.ctx.arc(m.x, m.y, 13, 0, Math.PI * 2); this.ctx.fill();
                     this.ctx.strokeStyle = "#fff"; this.ctx.lineWidth = 1.5; this.ctx.stroke();
                     this.ctx.fillStyle = "#000"; this.ctx.font = "bold 9px 'Segoe UI'";
-                    this.ctx.fillText("M" + (idx + 1), m.x - 5, m.y + 3);
+                    this.ctx.fillText("V" + (idx + 1), m.x - 5, m.y + 3);
                 });
 
-                // Tượng Empire
-                this.ctx.fillStyle = "#78281f"; this.ctx.fillRect(this.canvas.width - 60, 60, 45, 260);
-                this.ctx.fillStyle = "#922b21"; this.ctx.beginPath(); this.ctx.arc(this.canvas.width - 37, 55, 18, 0, Math.PI * 2); this.ctx.fill();
+                this.ctx.fillStyle = "#641e16"; this.ctx.fillRect(this.canvas.width - 60, 50, 45, 240);
+                this.ctx.fillStyle = "#922b21"; this.ctx.beginPath(); this.ctx.arc(this.canvas.width - 37, 45, 18, 0, Math.PI * 2); this.ctx.fill();
             }
             drawBriefingScroll() {
                 this.ctx.fillStyle = "rgba(0, 0, 0, 0.85)"; this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                this.ctx.fillStyle = "#f5f5dc"; this.ctx.fillRect(140, 50, this.canvas.width - 280, 300);
-                this.ctx.fillStyle = "#5d4037"; this.ctx.fillRect(125, 40, 25, 320); this.ctx.fillRect(this.canvas.width - 150, 40, 25, 320);
-                this.ctx.strokeStyle = "#d7ccc8"; this.ctx.lineWidth = 3; this.ctx.strokeRect(140, 50, this.canvas.width - 280, 300);
+                this.ctx.fillStyle = "#f5f5dc"; this.ctx.fillRect(130, 40, this.canvas.width - 260, 280);
+                this.ctx.fillStyle = "#5d4037"; this.ctx.fillRect(115, 30, 25, 300); this.ctx.fillRect(this.canvas.width - 140, 30, 25, 300);
+                this.ctx.strokeStyle = "#d7ccc8"; this.ctx.lineWidth = 3; this.ctx.strokeRect(130, 40, this.canvas.width - 260, 280);
 
-                this.ctx.fillStyle = "#111"; this.ctx.font = "bold 26px 'Segoe UI'"; this.ctx.textAlign = "center";
-                this.ctx.fillText("Kiếm sĩ Phản công", this.canvas.width / 2, 100);
-                this.ctx.font = "14px 'Segoe UI'";
-                this.ctx.fillText("Trong nỗ lực giành lại đất đai, lượng Kiếm sĩ còn lại đang dồn toàn", this.canvas.width / 2, 145);
-                this.ctx.fillText("lực còn lại để tấn công bạn!", this.canvas.width / 2, 170);
-                this.ctx.fillStyle = "#b71c1c"; this.ctx.font = "bold 15px 'Segoe UI'";
-                this.ctx.fillText("Hãy vượt qua cuộc phản công của Kiếm sĩ", this.canvas.width / 2, 220);
+                this.ctx.fillStyle = "#111"; this.ctx.font = "bold 22px 'Segoe UI'"; this.ctx.textAlign = "center";
+                this.ctx.fillText("Bảo Vệ Vùng Giải Phóng", this.canvas.width / 2, 85);
+                this.ctx.font = "13px 'Segoe UI'";
+                this.ctx.fillText("Kẻ địch đang dồn lực tiến công vào căn cứ. Hãy huy động dân quân,", this.canvas.width / 2, 125);
+                this.ctx.fillText("phát triển lực lượng và anh dũng đẩy lùi các đợt tấn công!", this.canvas.width / 2, 148);
+                this.ctx.fillStyle = "#c0392b"; this.ctx.font = "bold 14px 'Segoe UI'";
+                this.ctx.fillText("Quyết tử cho Tổ quốc quyết sinh!", this.canvas.width / 2, 190);
 
-                this.ctx.fillStyle = "#1b4f72"; this.ctx.fillRect(this.canvas.width / 2 - 55, 270, 110, 40);
-                this.ctx.strokeStyle = "#5dade2"; this.ctx.lineWidth = 2; this.ctx.strokeRect(this.canvas.width / 2 - 55, 270, 110, 40);
-                this.ctx.fillStyle = "#fff"; this.ctx.font = "bold 16px 'Segoe UI'";
-                this.ctx.fillText("OK", this.canvas.width / 2, 296);
+                this.ctx.fillStyle = "#1b4f72"; this.ctx.fillRect(this.canvas.width / 2 - 50, 235, 100, 36);
+                this.ctx.strokeStyle = "#5dade2"; this.ctx.lineWidth = 2; this.ctx.strokeRect(this.canvas.width / 2 - 50, 235, 100, 36);
+                this.ctx.fillStyle = "#fff"; this.ctx.font = "bold 15px 'Segoe UI'";
+                this.ctx.fillText("XUẤT QUÂN", this.canvas.width / 2, 258);
                 this.ctx.textAlign = "left";
             }
             run() {
@@ -314,8 +325,8 @@ game_html = """
                     this.gameOver = true;
                     this.ctx.fillStyle = "rgba(0,0,0,0.9)"; this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                     this.ctx.fillStyle = this.statueHp > 0 ? "#2ecc71" : "#e74c3c";
-                    this.ctx.font = "bold 36px 'Segoe UI'"; this.ctx.textAlign = "center";
-                    this.ctx.fillText(this.statueHp > 0 ? "🏆 ORDER EMPIRE CHIẾN THẮNG!" : "💀 TÒA THÀNH ĐÃ THẤT THỦ!", this.canvas.width / 2, this.canvas.height / 2);
+                    this.ctx.font = "bold 32px 'Segoe UI'"; this.ctx.textAlign = "center";
+                    this.ctx.fillText(this.statueHp > 0 ? "⭐ CHIẾN THẮNG! GIẢI PHÓNG HOÀN TOÀN!" : "💀 CĂN CỨ ĐÃ THẤT THỦ!", this.canvas.width / 2, this.canvas.height / 2);
                     return;
                 }
 
@@ -338,7 +349,6 @@ game_html = """
 
                 this.particles.updateAndDraw(this.ctx);
 
-                // Quản lý thợ mỏ
                 this.units.forEach((u, idx) => {
                     if (u.isSpinning > 0) u.isSpinning--;
                     if (u.type === 'miner') {
@@ -351,13 +361,13 @@ game_html = """
                             } else if (u.state === 'mining') {
                                 u.goldBag = 15 * this.techLevel; u.state = 'returning';
                             } else if (u.state === 'returning') {
-                                let dx = 70 - u.x; let dy = 200 - u.y;
+                                let dx = 70 - u.x; let dy = 180 - u.y;
                                 let dist = Math.hypot(dx, dy);
                                 if (dist > 3) { u.x += (dx / dist) * u.speed; u.y += (dy / dist) * u.speed; }
                                 else {
                                     this.gold += u.goldBag || 15; u.goldBag = 0; u.state = 'going';
-                                    this.particles.emit(70, 200, '#ffcc00', 8);
-                                    this.addFloatingText("+" + (15 * this.techLevel) + " Gold", 70, 200, '#ffcc00');
+                                    this.particles.emit(70, 180, '#f1c40f', 8);
+                                    this.addFloatingText("+" + (15 * this.techLevel) + " Lương thực", 70, 180, '#f1c40f');
                                     this.updateUI();
                                 }
                             }
@@ -379,8 +389,8 @@ game_html = """
                                 if (u.attackCd > 0) u.attackCd--;
                                 else {
                                     this.enemyStatueHp -= u.dmg;
-                                    this.particles.emit(this.canvas.width - 60, 180, '#ffcc00', 10);
-                                    this.addFloatingText("-" + Math.floor(u.dmg), this.canvas.width - 60, 180, '#ffcc00');
+                                    this.particles.emit(this.canvas.width - 60, 160, '#f1c40f', 10);
+                                    this.addFloatingText("-" + Math.floor(u.dmg), this.canvas.width - 60, 160, '#f1c40f');
                                     u.attackCd = 35;
                                     this.updateUI();
                                 }
@@ -391,15 +401,14 @@ game_html = """
                     if (u.hp <= 0) this.units.splice(idx, 1);
                 });
 
-                // Quản lý quái địch
                 this.enemies.forEach((e, idx) => {
                     let nearestUnit = this.units.find(u => u.type !== 'miner' && Math.hypot(u.x - e.x, u.y - e.y) <= e.range);
                     if (nearestUnit) {
                         if (e.attackCd > 0) e.attackCd--;
                         else {
                             nearestUnit.hp -= e.dmg;
-                            this.particles.emit(nearestUnit.x, nearestUnit.y, '#ffcc00', 6);
-                            this.addFloatingText("-" + Math.floor(e.dmg), nearestUnit.x, nearestUnit.y - 15, '#ffcc00');
+                            this.particles.emit(nearestUnit.x, nearestUnit.y, '#f1c40f', 6);
+                            this.addFloatingText("-" + Math.floor(e.dmg), nearestUnit.x, nearestUnit.y - 15, '#f1c40f');
                             e.attackCd = 32;
                         }
                     } else {
@@ -408,15 +417,15 @@ game_html = """
                             if (e.attackCd > 0) e.attackCd--;
                             else {
                                 this.statueHp -= e.dmg;
-                                this.particles.emit(50, 180, '#e74c3c', 10);
-                                this.addFloatingText("-" + Math.floor(e.dmg), 50, 180, '#e74c3c');
+                                this.particles.emit(50, 160, '#e74c3c', 10);
+                                this.addFloatingText("-" + Math.floor(e.dmg), 50, 160, '#e74c3c');
                                 e.attackCd = 38;
                                 this.updateUI();
                             }
                         }
                     }
                     e.draw(this.ctx, this.animFrame);
-                    if (e.hp <= 0) { this.enemies.splice(idx, 1); this.gold += 35; this.particles.emit(e.x, e.y, '#ffcc00', 12); this.updateUI(); }
+                    if (e.hp <= 0) { this.enemies.splice(idx, 1); this.gold += 35; this.particles.emit(e.x, e.y, '#f1c40f', 12); this.updateUI(); }
                 });
 
                 this.floatingTexts.forEach((ft, idx) => {
@@ -445,7 +454,7 @@ game_html = """
                     troll: { hp: 650, dmg: 60, range: 50, speed: 0.5, size: 1.85 }
                 }[t];
 
-                GameManager.enemies.push(new GameObject(GameManager.canvas.width - 80, 140 + Math.random() * 200, t, true, stats));
+                GameManager.enemies.push(new GameObject(GameManager.canvas.width - 80, 130 + Math.random() * 180, t, true, stats));
             }
         }, 3200);
 
@@ -455,4 +464,4 @@ game_html = """
 </html>
 """
 
-st.components.v1.html(game_html, height=540, scrolling=False)
+st.components.v1.html(game_html, height=520, scrolling=False)
