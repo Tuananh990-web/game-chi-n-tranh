@@ -1,7 +1,7 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="Stick War 2: Order Empire - Massive Engine",
+    page_title="Stick War 2: Order Empire - Final Ultimate Edition",
     page_icon="⚔️",
     layout="wide"
 )
@@ -15,15 +15,15 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1 class='title-text'>⚔️ STICK WAR 2: ORDER EMPIRE - ULTIMATE MASTERPIECE ⚔️</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-text'>Massive RTS Architecture: Object-Oriented Entities, Particle Physics, Tactical AI & Flash 2D Art System</p>", unsafe_allow_html=True)
+st.markdown("<h1 class='title-text'>⚔️ STICK WAR 2: ORDER EMPIRE - FINAL ULTIMATE ⚔️</h1>", unsafe_allow_html=True)
+st.markdown("<p class='sub-text'>Responsive Controls | Dynamic Evolution Armor | Unique Class Colors | Particle FX & Tactical RTS Engine</p>", unsafe_allow_html=True)
 
 game_html = """
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Stick War 2 Massive Engine</title>
+    <title>Stick War 2 Final Ultimate</title>
     <style>
         body { margin: 0; background: #020408; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; overflow: hidden; }
         canvas { background: linear-gradient(to bottom, #5cb85c 0%, #4cae4c 70%, #398439 100%); border: 4px solid #2e6b2e; border-radius: 10px; box-shadow: 0 15px 40px rgba(0,0,0,0.95); display: block; margin: 4px auto; }
@@ -31,6 +31,7 @@ game_html = """
         .cmd-panel { display: flex; justify-content: center; gap: 6px; margin-top: 4px; }
         button { background: #795548; color: #fff; border: 2px solid #ffcc00; padding: 6px 11px; font-weight: bold; font-size: 11px; border-radius: 4px; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
         button:hover { background: #8d6e63; transform: scale(1.05); }
+        button:active { transform: scale(0.95); }
         .cmd-btn { background: #01579b; border-color: #4fc3f7; }
         .skill-btn { background: #4a148c; border-color: #ffb74d; }
         .tech-btn { background: #1b5e20; border-color: #81c784; }
@@ -40,27 +41,27 @@ game_html = """
 <body>
 
     <div class="stats">
-        🏰 ORDER HP: <span id="hpText">3000</span> | 👹 EMPIRE HP: <span id="enemyHpText">3000</span> | 💰 GOLD: <span id="goldText">450</span> | 👥 POP: <span id="popText">0</span>/100 | 💎 TECH: <span id="techText">1</span>
+        🏰 ORDER HP: <span id="hpText">3000</span> | 👹 EMPIRE HP: <span id="enemyHpText">3000</span> | 💰 GOLD: <span id="goldText">450</span> | 👥 POP: <span id="popText">0</span>/100 | 💎 TECH CẤP: <span id="techText">1</span>
     </div>
 
     <canvas id="gameCanvas" width="980" height="400"></canvas>
 
     <div class="cmd-panel">
-        <button class="cmd-btn" onclick="GameManager.setCommand('ATTACK')">⚔️ TẤN CÔNG</button>
-        <button class="cmd-btn" onclick="GameManager.setCommand('DEFEND')">🛡️ PHÒNG THỦ</button>
-        <button class="cmd-btn" onclick="GameManager.setCommand('HOLD')">🛑 GIỮ VỊ TRÍ</button>
-        <button class="tech-btn" onclick="GameManager.upgradeTech()">⬆️ NÂNG CẤP (150G)</button>
-        <button class="skill-btn" onclick="GameManager.triggerSkill('spin')">🌀 BÃO KIẾM</button>
-        <button class="skill-btn" onclick="GameManager.triggerSkill('earthquake')">💥 ĐỘNG ĐẤT</button>
+        <button class="cmd-btn" id="btnAttack">⚔️ TẤN CÔNG</button>
+        <button class="cmd-btn" id="btnDefend">🛡️ PHÒNG THỦ</button>
+        <button class="cmd-btn" id="btnHold">🛑 GIỮ VỊ TRÍ</button>
+        <button class="tech-btn" id="btnTech">⬆️ NÂNG CẤP GIÁP & SÁT THƯƠNG (150G)</button>
+        <button class="skill-btn" id="btnSpin">🌀 BÃO KIẾM</button>
+        <button class="skill-btn" id="btnEarth">💥 ĐỘNG ĐẤT</button>
     </div>
 
     <div class="ui-panel">
-        <button onclick="GameManager.spawnUnit('miner')">⛏️ Miner (30g)</button>
-        <button onclick="GameManager.spawnUnit('swordwrath')">⚔️ Swordwrath (40g)</button>
-        <button onclick="GameManager.spawnUnit('archidon')">🏹 Archidon (50g)</button>
-        <button onclick="GameManager.spawnUnit('spearton')">🛡️ Spearton (70g)</button>
-        <button onclick="GameManager.spawnUnit('magikill')">🧙 Magikill (100g)</button>
-        <button onclick="GameManager.spawnUnit('giant')">🗿 Giant (160g)</button>
+        <button id="spawnMiner">⛏️ Miner (30g)</button>
+        <button id="spawnSwordwrath">⚔️ Swordwrath (40g)</button>
+        <button id="spawnArchidon">🏹 Archidon (50g)</button>
+        <button id="spawnSpearton">🛡️ Spearton (70g)</button>
+        <button id="spawnMagikill">🧙 Magikill (100g)</button>
+        <button id="spawnGiant">🗿 Giant (160g)</button>
     </div>
 
     <script>
@@ -86,35 +87,53 @@ game_html = """
         }
 
         class GameObject {
-            constructor(x, y, type, isEnemy, stats) {
+            constructor(x, y, type, isEnemy, stats, techLevel = 1) {
                 this.x = x; this.y = y; this.type = type; this.isEnemy = isEnemy;
                 this.hp = stats.hp; this.maxHp = stats.hp; this.dmg = stats.dmg;
                 this.range = stats.range; this.speed = stats.speed; this.size = stats.size;
                 this.attackCd = 0; this.state = 'going'; this.goldBag = 0;
                 this.isSpinning = 0; this.mineTarget = null;
+                this.techLevel = techLevel;
             }
             draw(ctx, animFrame) {
                 ctx.save();
                 ctx.translate(this.x, this.y);
                 if (this.isSpinning > 0) ctx.rotate((50 - this.isSpinning) * 0.5);
 
-                let color = this.isEnemy ? '#e74c3c' : '#3498db';
-                if (this.type === 'miner') color = '#f39c12';
-                if (this.type === 'spearton') color = '#2980b9';
-                if (this.type === 'giant' || this.type === 'troll') color = '#6d4c41';
-
-                // Đầu đen tròn hoàn toàn chuẩn phong cách Flash Stick War
-                ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(0, -14 * this.size, 6 * this.size, 0, Math.PI * 2); ctx.fill();
-                if (this.type === 'spearton') {
-                    ctx.fillStyle = "#c0392b"; ctx.fillRect(-7 * this.size, -23 * this.size, 14 * this.size, 5 * this.size);
+                // MÀU SẮC RIÊNG BỎ MỖI BÌNH CHỦNG ĐỂ DỄ NHẬN DẠNG
+                let unitColor = '#3498db'; // Mặc định Kiếm sĩ Xanh Lam
+                if (this.isEnemy) unitColor = '#e74c3c';
+                else {
+                    if (this.type === 'miner') unitColor = '#f39c12';      // Cam Vàng
+                    else if (this.type === 'archidon') unitColor = '#2ecc71';   // Xanh Lá
+                    else if (this.type === 'spearton') unitColor = '#1f618d';   // Xanh Dương Đậm
+                    else if (this.type === 'magikill') unitColor = '#8e44ad';   // Tím Thạch Anh
+                    else if (this.type === 'giant') unitColor = '#6d4c41';      // Nâu Đất
                 }
 
-                ctx.strokeStyle = color; ctx.lineWidth = 3.5 * this.size;
+                // Đầu đen tròn hoàn toàn phẳng chuẩn Flash Stick War
+                ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(0, -14 * this.size, 6 * this.size, 0, Math.PI * 2); ctx.fill();
+
+                // NÂNG CẤP GIÁP VÀ NGOẠI HÌNH THEO CẤP CÔNG NGHỆ
+                if (!this.isEnemy && this.techLevel > 1) {
+                    ctx.fillStyle = this.techLevel === 2 ? "#bdc3c7" : "#f1c40f"; // Cấp 2 Giáp Bạc, Cấp 3 Giáp Vàng
+                    ctx.fillRect(-5 * this.size, -12 * this.size, 10 * this.size, 8 * this.size); // Áo Giáp
+                }
+
+                if (this.type === 'spearton') {
+                    ctx.fillStyle = "#c0392b"; ctx.fillRect(-7 * this.size, -23 * this.size, 14 * this.size, 5 * this.size); // Mũ chùm lông đỏ
+                } else if (this.type === 'magikill') {
+                    ctx.fillStyle = "#4a148c"; ctx.beginPath(); ctx.moveTo(0, -28 * this.size); ctx.lineTo(-7 * this.size, -16 * this.size); ctx.lineTo(7 * this.size, -16 * this.size); ctx.fill(); // Mũ Phù Thủy
+                }
+
+                // Thân & Chân
+                ctx.strokeStyle = unitColor; ctx.lineWidth = 3.5 * this.size;
                 ctx.beginPath(); ctx.moveTo(0, -8 * this.size); ctx.lineTo(0, 8 * this.size); ctx.stroke();
                 let swing = Math.sin(animFrame * 0.3) * 5;
                 ctx.beginPath(); ctx.moveTo(0, 8 * this.size); ctx.lineTo(-5 * this.size, 18 * this.size + swing); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(0, 8 * this.size); ctx.lineTo(5 * this.size, 18 * this.size - swing); ctx.stroke();
 
+                // Thanh Máu
                 ctx.fillStyle = "#000"; ctx.fillRect(-12 * this.size, -28 * this.size, 24 * this.size, 3.5);
                 ctx.fillStyle = this.isEnemy ? "#e74c3c" : "#2ecc71";
                 ctx.fillRect(-12 * this.size, -28 * this.size, (this.hp / this.maxHp) * 24 * this.size, 3.5);
@@ -139,6 +158,7 @@ game_html = """
                 this.initListeners();
             }
             initListeners() {
+                // SỰ KIỆN CLICK CHUỘT VÀ BẤM NÚT ĐẢM BẢO NHẠY 100%
                 this.canvas.addEventListener('click', (e) => {
                     if (this.showBriefing) {
                         const rect = this.canvas.getBoundingClientRect();
@@ -148,6 +168,20 @@ game_html = """
                         }
                     }
                 });
+
+                document.getElementById('btnAttack').onclick = () => this.setCommand('ATTACK');
+                document.getElementById('btnDefend').onclick = () => this.setCommand('DEFEND');
+                document.getElementById('btnHold').onclick = () => this.setCommand('HOLD');
+                document.getElementById('btnTech').onclick = () => this.upgradeTech();
+                document.getElementById('btnSpin').onclick = () => this.triggerSkill('spin');
+                document.getElementById('btnEarth').onclick = () => this.triggerSkill('earthquake');
+
+                document.getElementById('spawnMiner').onclick = () => this.spawnUnit('miner');
+                document.getElementById('spawnSwordwrath').onclick = () => this.spawnUnit('swordwrath');
+                document.getElementById('spawnArchidon').onclick = () => this.spawnUnit('archidon');
+                document.getElementById('spawnSpearton').onclick = () => this.spawnUnit('spearton');
+                document.getElementById('spawnMagikill').onclick = () => this.spawnUnit('magikill');
+                document.getElementById('spawnGiant').onclick = () => this.spawnUnit('giant');
             }
             setCommand(cmd) { this.currentCommand = cmd; }
             addFloatingText(text, x, y, color = '#ffcc00') {
@@ -168,9 +202,14 @@ game_html = """
                 if (this.gold >= 150 && this.techLevel < 3) {
                     this.gold -= 150; this.techLevel++;
                     document.getElementById("techText").innerText = this.techLevel;
-                    this.units.forEach(u => { u.dmg = Math.floor(u.dmg * 1.25); u.maxHp = Math.floor(u.maxHp * 1.2); u.hp = u.maxHp; });
-                    this.particles.emit(this.canvas.width / 2, 200, '#81c784', 30);
-                    this.addFloatingText("⬆️ CÔNG NGHỆ ĐÃ NÂNG CẤP!", this.canvas.width / 2, 100, '#81c784');
+                    this.units.forEach(u => {
+                        u.techLevel = this.techLevel;
+                        u.dmg = Math.floor(u.dmg * 1.3);
+                        u.maxHp = Math.floor(u.maxHp * 1.25);
+                        u.hp = u.maxHp;
+                    });
+                    this.particles.emit(this.canvas.width / 2, 200, '#81c784', 35);
+                    this.addFloatingText("⬆️ GIÁP & TĂNG TĂNG SÁT THƯƠNG (CẤP " + this.techLevel + ")!", this.canvas.width / 2, 100, '#81c784');
                     this.updateUI();
                 }
             }
@@ -208,9 +247,11 @@ game_html = """
                 if (this.gold >= costs[type] && this.getCurrentPopulation() + pops[type] <= 100) {
                     this.gold -= costs[type];
                     let unit = new GameObject(80, 140 + Math.random() * 200, type, false, {
-                        hp: stats.hp * this.techLevel, dmg: stats.dmg * this.techLevel,
+                        hp: stats.hp * (1 + (this.techLevel - 1) * 0.25),
+                        dmg: stats.dmg * (1 + (this.techLevel - 1) * 0.3),
                         range: stats.range, speed: stats.speed, size: stats.size
-                    });
+                    }, this.techLevel);
+
                     if (type === 'miner') {
                         let freeMine = this.goldMines.find(m => !m.miner);
                         if (freeMine) { freeMine.miner = unit; unit.mineTarget = freeMine; }
@@ -328,7 +369,7 @@ game_html = """
                             else {
                                 nearestEnemy.hp -= u.dmg;
                                 this.particles.emit(nearestEnemy.x, nearestEnemy.y, '#e74c3c', 6);
-                                this.addFloatingText("-" + u.dmg, nearestEnemy.x, nearestEnemy.y - 15, '#e74c3c');
+                                this.addFloatingText("-" + Math.floor(u.dmg), nearestEnemy.x, nearestEnemy.y - 15, '#e74c3c');
                                 u.attackCd = 28;
                             }
                         } else {
@@ -339,7 +380,7 @@ game_html = """
                                 else {
                                     this.enemyStatueHp -= u.dmg;
                                     this.particles.emit(this.canvas.width - 60, 180, '#ffcc00', 10);
-                                    this.addFloatingText("-" + u.dmg, this.canvas.width - 60, 180, '#ffcc00');
+                                    this.addFloatingText("-" + Math.floor(u.dmg), this.canvas.width - 60, 180, '#ffcc00');
                                     u.attackCd = 35;
                                     this.updateUI();
                                 }
@@ -358,7 +399,7 @@ game_html = """
                         else {
                             nearestUnit.hp -= e.dmg;
                             this.particles.emit(nearestUnit.x, nearestUnit.y, '#ffcc00', 6);
-                            this.addFloatingText("-" + e.dmg, nearestUnit.x, nearestUnit.y - 15, '#ffcc00');
+                            this.addFloatingText("-" + Math.floor(e.dmg), nearestUnit.x, nearestUnit.y - 15, '#ffcc00');
                             e.attackCd = 32;
                         }
                     } else {
@@ -368,7 +409,7 @@ game_html = """
                             else {
                                 this.statueHp -= e.dmg;
                                 this.particles.emit(50, 180, '#e74c3c', 10);
-                                this.addFloatingText("-" + e.dmg, 50, 180, '#e74c3c');
+                                this.addFloatingText("-" + Math.floor(e.dmg), 50, 180, '#e74c3c');
                                 e.attackCd = 38;
                                 this.updateUI();
                             }
@@ -393,7 +434,6 @@ game_html = """
 
         const GameManager = new RTSGameManager();
 
-        // AI Spawner tự sinh quái định kỳ
         setInterval(() => {
             if (!GameManager.showBriefing && !GameManager.gameOver && GameManager.enemyStatueHp > 0 && GameManager.enemies.length < 30) {
                 let types = ['goblin', 'orc', 'shadow_mage', 'troll'];
