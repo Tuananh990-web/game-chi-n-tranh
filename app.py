@@ -1,7 +1,7 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="Stick War 2: Order Empire - Advanced RTS Engine",
+    page_title="Stick War 2: Order Empire - Ultimate Masterpiece",
     page_icon="⚔️",
     layout="wide"
 )
@@ -15,18 +15,18 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1 class='title-text'>⚔️ STICK WAR 2: ORDER EMPIRE - ADVANCED RTS ⚔️</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-text'>Full-featured RTS Engine: Tech Tree, Advanced Pathfinding, AI Skirmish & Flash 2D Art System</p>", unsafe_allow_html=True)
+st.markdown("<h1 class='title-text'>⚔️ STICK WAR 2: ORDER EMPIRE - ULTIMATE EDITION ⚔️</h1>", unsafe_allow_html=True)
+st.markdown("<p class='sub-text'>Complete Flash 2D RTS Engine: Mission Briefing, 6 Gold Mines, Tech Tree & Tactical Combat</p>", unsafe_allow_html=True)
 
 game_html = """
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Stick War 2 Advanced RTS</title>
+    <title>Stick War 2 Ultimate</title>
     <style>
         body { margin: 0; background: #030508; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; overflow: hidden; }
-        canvas { background: linear-gradient(to bottom, #4ca64c 0%, #388e3c 70%, #2e7d32 100%); border: 4px solid #3e2723; border-radius: 10px; box-shadow: 0 15px 40px rgba(0,0,0,0.95); display: block; margin: 4px auto; }
+        canvas { background: linear-gradient(to bottom, #5cb85c 0%, #4cae4c 70%, #398439 100%); border: 4px solid #2e6b2e; border-radius: 10px; box-shadow: 0 15px 40px rgba(0,0,0,0.95); display: block; margin: 4px auto; }
         .ui-panel { display: flex; justify-content: center; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
         .cmd-panel { display: flex; justify-content: center; gap: 6px; margin-top: 4px; }
         button { background: #795548; color: #fff; border: 2px solid #ffcc00; padding: 6px 11px; font-weight: bold; font-size: 11px; border-radius: 4px; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
@@ -40,7 +40,7 @@ game_html = """
 <body>
 
     <div class="stats">
-        🏰 ORDER HP: <span id="hpText">3000</span> | 👹 EMPIRE HP: <span id="enemyHpText">3000</span> | 💰 GOLD: <span id="goldText">450</span> | 👥 POP: <span id="popText">0</span>/100 | 💎 TECH LVL: <span id="techText">1</span>
+        🏰 ORDER HP: <span id="hpText">3000</span> | 👹 EMPIRE HP: <span id="enemyHpText">3000</span> | 💰 GOLD: <span id="goldText">450</span> | 👥 POP: <span id="popText">0</span>/100 | 💎 TECH: <span id="techText">1</span>
     </div>
 
     <canvas id="gameCanvas" width="980" height="400"></canvas>
@@ -49,7 +49,7 @@ game_html = """
         <button class="cmd-btn" onclick="setCommand('ATTACK')">⚔️ TẤN CÔNG</button>
         <button class="cmd-btn" onclick="setCommand('DEFEND')">🛡️ PHÒNG THỦ</button>
         <button class="cmd-btn" onclick="setCommand('HOLD')">🛑 GIỮ VỊ TRÍ</button>
-        <button class="tech-btn" onclick="upgradeTech()">⬆️ NÂNG CẤP CÔNG NGHỆ (150G)</button>
+        <button class="tech-btn" onclick="upgradeTech()">⬆️ NÂNG CẤP (150G)</button>
         <button class="skill-btn" onclick="triggerSkill('spin')">🌀 BÃO KIẾM</button>
         <button class="skill-btn" onclick="triggerSkill('earthquake')">💥 ĐỘNG ĐẤT</button>
     </div>
@@ -72,9 +72,9 @@ game_html = """
         let techLevel = 1;
         let currentCommand = 'ATTACK';
         let gameOver = false;
-        let showBriefing = true;
+        let showBriefing = true; // Hiển thị bảng cuộn giấy cốt truyện mở màn
 
-        // 6 Mỏ vàng nhỏ chiến thuật ngay trước thành Order
+        // 6 mỏ vàng nhỏ chiến thuật trước thành Order
         let goldMines = [
             { x: 150, y: 140, miner: null }, { x: 200, y: 200, miner: null }, { x: 250, y: 270, miner: null },
             { x: 170, y: 320, miner: null }, { x: 220, y: 120, miner: null }, { x: 270, y: 180, miner: null }
@@ -83,7 +83,6 @@ game_html = """
         let units = [];
         let enemies = [];
         let floatingTexts = [];
-        let projectiles = [];
         let animFrame = 0;
 
         function setCommand(cmd) { currentCommand = cmd; }
@@ -110,7 +109,7 @@ game_html = """
                 techLevel++;
                 document.getElementById("techText").innerText = techLevel;
                 units.forEach(u => { u.dmg = Math.floor(u.dmg * 1.25); u.maxHp = Math.floor(u.maxHp * 1.2); u.hp = u.maxHp; });
-                addFloatingText("⬆️ CÔNG NGHỆ ĐÃ ĐƯỢC NÂNG CẤP!", canvas.width / 2, 100, '#81c784');
+                addFloatingText("⬆️ CÔNG NGHỆ ĐÃ NÂNG CẤP!", canvas.width / 2, 100, '#81c784');
                 updateUI();
             }
         }
@@ -130,6 +129,7 @@ game_html = """
             }
         }
 
+        // Xử lý bấm nút OK trên bảng cuộn giấy cốt truyện
         canvas.addEventListener('click', function(event) {
             if (showBriefing) {
                 const rect = canvas.getBoundingClientRect();
@@ -141,7 +141,7 @@ game_html = """
             }
         });
 
-        // AI thông minh điều phối quân địch
+        // Tự sinh quái địch theo đợt chiến thuật
         setInterval(() => {
             if (!showBriefing && !gameOver && enemyStatueHp > 0 && enemies.length < 30) {
                 let types = ['goblin', 'orc', 'shadow_mage', 'troll'];
@@ -201,25 +201,25 @@ game_html = """
         }
 
         function drawScene() {
-            ctx.fillStyle = "#388e3c"; ctx.fillRect(0, 100, canvas.width, 300);
-            ctx.fillStyle = "#2e7d32"; ctx.fillRect(0, 100, canvas.width, 6);
+            ctx.fillStyle = "#5cb85c"; ctx.fillRect(0, 100, canvas.width, 300);
+            ctx.fillStyle = "#4cae4c"; ctx.fillRect(0, 100, canvas.width, 6);
 
             // Tượng Order (Trái)
-            ctx.fillStyle = "#ffb300"; ctx.fillRect(15, 60, 45, 260);
-            ctx.fillStyle = "#ffe082"; ctx.beginPath(); ctx.arc(37, 55, 18, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#d4af37"; ctx.fillRect(15, 60, 45, 260);
+            ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(37, 55, 18, 0, Math.PI*2); ctx.fill();
 
             // 6 Mỏ vàng nhỏ
             goldMines.forEach((m, idx) => {
-                ctx.fillStyle = "#ffb300";
+                ctx.fillStyle = "#f1c40f";
                 ctx.beginPath(); ctx.arc(m.x, m.y, 14, 0, Math.PI*2); ctx.fill();
-                ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.5; ctx.stroke();
+                ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke();
                 ctx.fillStyle = "#000"; ctx.font = "bold 9px 'Segoe UI'";
                 ctx.fillText("M" + (idx+1), m.x - 5, m.y + 3);
             });
 
             // Tượng Empire (Phải)
-            ctx.fillStyle = "#b71c1c"; ctx.fillRect(canvas.width - 60, 60, 45, 260);
-            ctx.fillStyle = "#e53935"; ctx.beginPath(); ctx.arc(canvas.width - 37, 55, 18, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#78281f"; ctx.fillRect(canvas.width - 60, 60, 45, 260);
+            ctx.fillStyle = "#922b21"; ctx.beginPath(); ctx.arc(canvas.width - 37, 55, 18, 0, Math.PI*2); ctx.fill();
         }
 
         function drawBriefingScroll() {
@@ -229,32 +229,31 @@ game_html = """
             ctx.strokeStyle = "#d7ccc8"; ctx.lineWidth = 3; ctx.strokeRect(140, 50, canvas.width - 280, 300);
 
             ctx.fillStyle = "#111"; ctx.font = "bold 26px 'Segoe UI'"; ctx.textAlign = "center";
-            ctx.fillText("Chiến Dịch Order Empire", canvas.width / 2, 100);
+            ctx.fillText("Kiếm sĩ Phản công", canvas.width / 2, 100);
             ctx.font = "14px 'Segoe UI'";
-            ctx.fillText("Thế lực Hắc Ám Empire đang dồn toàn lực tấn công căn cứ của bạn.", canvas.width / 2, 145);
-            ctx.fillText("Hãy khai thác vàng, nâng cấp công nghệ và bảo vệ tượng chính!", canvas.width / 2, 170);
+            ctx.fillText("Trong nỗ lực giành lại đất đai, lượng Kiếm sĩ còn lại đang dồn toàn", canvas.width / 2, 145);
+            ctx.fillText("lực còn lại để tấn công bạn!", canvas.width / 2, 170);
             ctx.fillStyle = "#b71c1c"; ctx.font = "bold 15px 'Segoe UI'";
-            ctx.fillText("Bảo vệ vương quốc và tiêu diệt Cổng Quỷ!", canvas.width / 2, 220);
+            ctx.fillText("Hãy vượt qua cuộc phản công của Kiếm sĩ", canvas.width / 2, 220);
 
-            ctx.fillStyle = "#01579b"; ctx.fillRect(canvas.width / 2 - 55, 270, 110, 40);
-            ctx.strokeStyle = "#4fc3f7"; ctx.lineWidth = 2; ctx.strokeRect(canvas.width / 2 - 55, 270, 110, 40);
+            ctx.fillStyle = "#1b4f72"; ctx.fillRect(canvas.width / 2 - 55, 270, 110, 40);
+            ctx.strokeStyle = "#5dade2"; ctx.lineWidth = 2; ctx.strokeRect(canvas.width / 2 - 55, 270, 110, 40);
             ctx.fillStyle = "#fff"; ctx.font = "bold 16px 'Segoe UI'";
-            ctx.fillText("BẮT ĐẦU", canvas.width / 2, 296);
+            ctx.fillText("OK", canvas.width / 2, 296);
             ctx.textAlign = "left";
         }
 
         function drawCharacter(entity, isEnemy) {
             ctx.save();
             ctx.translate(entity.x, entity.y);
-            let color = isEnemy ? '#e53935' : '#0288d1';
-            if (entity.type === 'miner') color = '#fb8c00';
-            if (entity.type === 'spearton') color = '#1565c0';
-            if (entity.type === 'giant') color = '#6d4c41';
+            let color = isEnemy ? '#e74c3c' : '#3498db';
+            if (entity.type === 'miner') color = '#f39c12';
+            if (entity.type === 'spearton') color = '#2980b9';
 
-            // Đầu đen hoàn toàn phẳng không có mặt chuẩn Stick War
+            // Đầu đen tròn hoàn toàn phẳng, không có mặt chuẩn Flash Stick War
             ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(0, -14 * entity.size, 6 * entity.size, 0, Math.PI*2); ctx.fill();
             if (entity.type === 'spearton') {
-                ctx.fillStyle = "#b71c1c"; ctx.fillRect(-7*entity.size, -23*entity.size, 14*entity.size, 5*entity.size);
+                ctx.fillStyle = "#c0392b"; ctx.fillRect(-7*entity.size, -23*entity.size, 14*entity.size, 5*entity.size);
             }
 
             ctx.strokeStyle = color; ctx.lineWidth = 3.5 * entity.size;
@@ -264,7 +263,7 @@ game_html = """
             ctx.beginPath(); ctx.moveTo(0, 8 * entity.size); ctx.lineTo(5 * entity.size, 18 * entity.size - swing); ctx.stroke();
 
             ctx.fillStyle = "#000"; ctx.fillRect(-12 * entity.size, -28 * entity.size, 24 * entity.size, 3.5);
-            ctx.fillStyle = isEnemy ? "#e53935" : "#4caf50";
+            ctx.fillStyle = isEnemy ? "#e74c3c" : "#2ecc71";
             ctx.fillRect(-12 * entity.size, -28 * entity.size, (entity.hp / entity.maxHp) * 24 * entity.size, 3.5);
             ctx.restore();
         }
@@ -273,7 +272,7 @@ game_html = """
             if (statueHp <= 0 || enemyStatueHp <= 0) {
                 gameOver = true;
                 ctx.fillStyle = "rgba(0,0,0,0.9)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = statueHp > 0 ? "#4caf50" : "#e53935";
+                ctx.fillStyle = statueHp > 0 ? "#2ecc71" : "#e74c3c";
                 ctx.font = "bold 36px 'Segoe UI'"; ctx.textAlign = "center";
                 ctx.fillText(statueHp > 0 ? "🏆 ORDER EMPIRE CHIẾN THẮNG!" : "💀 TÒA THÀNH ĐÃ THẤT THỦ!", canvas.width / 2, canvas.height / 2);
                 return;
@@ -317,7 +316,7 @@ game_html = """
                         if (u.attackCd > 0) u.attackCd--;
                         else {
                             nearestEnemy.hp -= u.dmg;
-                            addFloatingText("-" + u.dmg, nearestEnemy.x, nearestEnemy.y - 15, '#e53935');
+                            addFloatingText("-" + u.dmg, nearestEnemy.x, nearestEnemy.y - 15, '#e74c3c');
                             u.attackCd = 28;
                         }
                     } else {
@@ -338,7 +337,7 @@ game_html = """
                 if (u.hp <= 0) units.splice(idx, 1);
             });
 
-            // Xử lý quái vật
+            // Xử lý quân địch
             enemies.forEach((e, idx) => {
                 let nearestUnit = units.find(u => u.type !== 'miner' && Math.hypot(u.x - e.x, u.y - e.y) <= e.range);
                 if (nearestUnit) {
@@ -354,7 +353,7 @@ game_html = """
                         if (e.attackCd > 0) e.attackCd--;
                         else {
                             statueHp -= e.dmg;
-                            addFloatingText("-" + e.dmg, 50, 180, '#e53935');
+                            addFloatingText("-" + e.dmg, 50, 180, '#e74c3c');
                             e.attackCd = 38;
                             updateUI();
                         }
