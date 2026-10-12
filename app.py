@@ -11,7 +11,6 @@ st.markdown("""
     .stApp { background-color: #030508; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, sans-serif; }
     iframe { border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.95); }
     .title-text { text-align: center; color: #ffcc00; text-transform: uppercase; font-weight: 800; margin-bottom: 0px; }
-    .sub-text { text-align: center; color: #aaaaaa; font-size: 14px; margin-bottom: 10px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -22,7 +21,7 @@ game_html = """
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Stick War 2 Final</title>
+    <title>Stick War 2 Final Fix</title>
     <style>
         body { margin: 0; background: #020305; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; overflow: hidden; }
         canvas { background: #15261c; border: 3px solid #4a3b2c; border-radius: 8px; box-shadow: 0 12px 35px rgba(0,0,0,0.95); display: block; margin: 4px auto; }
@@ -67,8 +66,9 @@ game_html = """
         let statueHp = 2500, enemyStatueHp = 2500;
         let gold = 400;
         let currentCommand = 'ATTACK';
+        let gameOver = false;
+        let gameResultText = "";
 
-        // 6 Mỏ vàng nhỏ phân bổ rõ ràng trước tượng Order bên trái
         let goldMines = [
             { x: 160, y: 120 }, { x: 210, y: 180 }, { x: 260, y: 250 },
             { x: 180, y: 310 }, { x: 230, y: 100 }, { x: 280, y: 160 }
@@ -97,6 +97,7 @@ game_html = """
         }
 
         function triggerSkill(type) {
+            if (gameOver) return;
             if (type === 'spin') {
                 units.filter(u => u.type === 'swordwrath').forEach(u => {
                     u.isSpinning = 40;
@@ -110,9 +111,8 @@ game_html = """
             }
         }
 
-        // Tự động sinh quái định kỳ
         setInterval(() => {
-            if (enemyStatueHp > 0 && enemies.length < 25) {
+            if (!gameOver && enemyStatueHp > 0 && enemies.length < 25) {
                 enemies.push({
                     x: canvas.width - 80, y: 120 + Math.random() * 220,
                     type: Math.random() > 0.5 ? 'orc' : 'goblin',
@@ -122,13 +122,14 @@ game_html = """
         }, 3000);
 
         function spawnUnit(type) {
+            if (gameOver) return;
             let costs = { miner: 30, swordwrath: 40, archidon: 50, spearton: 70, magikill: 100, giant: 160 };
             let pops = { miner: 1, swordwrath: 1, archidon: 1, spearton: 3, magikill: 5, giant: 4 };
 
             if (gold >= costs[type] && getCurrentPopulation() + pops[type] <= 100) {
                 gold -= costs[type];
                 units.push({
-                    x: 90, y: 130 + Math.random() * 220,
+                    x: 80, y: 130 + Math.random() * 220,
                     type: type, hp: 150, maxHp: 150, dmg: 20, range: 40,
                     speed: 1.2, size: 1.0, attackCd: 0, goldBag: 0, state: 'going'
                 });
@@ -144,15 +145,14 @@ game_html = """
         }
 
         function drawScene() {
-            // Nền đất
             ctx.fillStyle = "#1e2c20"; ctx.fillRect(0, 100, canvas.width, 300);
             ctx.fillStyle = "#2c3e2e"; ctx.fillRect(0, 100, canvas.width, 5);
 
-            // Tượng Order (Bên trái)
+            // Tượng Order
             ctx.fillStyle = "#c59b27"; ctx.fillRect(15, 60, 45, 260);
             ctx.fillStyle = "#e5c158"; ctx.beginPath(); ctx.arc(37, 55, 18, 0, Math.PI*2); ctx.fill();
 
-            // 6 Mỏ Vàng Nhỏ
+            // Mỏ vàng nhỏ
             goldMines.forEach((m, idx) => {
                 ctx.fillStyle = "#f39c12";
                 ctx.beginPath(); ctx.arc(m.x, m.y, 13, 0, Math.PI*2); ctx.fill();
@@ -161,7 +161,7 @@ game_html = """
                 ctx.fillText("M" + (idx+1), m.x - 5, m.y + 3);
             });
 
-            // Tượng Empire (Bên phải)
+            // Tượng Empire
             ctx.fillStyle = "#5c1d18"; ctx.fillRect(canvas.width - 60, 60, 45, 260);
             ctx.fillStyle = "#922b21"; ctx.beginPath(); ctx.arc(canvas.width - 37, 55, 18, 0, Math.PI*2); ctx.fill();
         }
@@ -172,30 +172,34 @@ game_html = """
             let color = isEnemy ? '#e74c3c' : '#3498db';
             if (entity.type === 'miner') color = '#f39c12';
 
-            // Đầu đen tròn
             ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(0, -14, 6, 0, Math.PI*2); ctx.fill();
-            // Thân
             ctx.strokeStyle = color; ctx.lineWidth = 3;
             ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(0, 8); ctx.stroke();
-            // Chân
             let swing = Math.sin(animFrame * 0.3) * 5;
             ctx.beginPath(); ctx.moveTo(0, 8); ctx.lineTo(-4, 18 + swing); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(0, 8); ctx.lineTo(4, 18 - swing); ctx.stroke();
 
-            // Thanh máu
             ctx.fillStyle = "#000"; ctx.fillRect(-12, -25, 24, 3);
             ctx.fillStyle = isEnemy ? "#e74c3c" : "#2ecc71";
             ctx.fillRect(-12, -25, (entity.hp / entity.maxHp) * 24, 3);
-
             ctx.restore();
         }
 
         function gameLoop() {
+            if (statueHp <= 0 || enemyStatueHp <= 0) {
+                gameOver = true;
+                ctx.fillStyle = "rgba(0,0,0,0.88)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = statueHp > 0 ? "#2ecc71" : "#e74c3c";
+                ctx.font = "bold 34px Arial";
+                ctx.fillText(statueHp > 0 ? "🏆 ORDER EMPIRE CHIẾN THẮNG!" : "💀 TÒA THÀNH ĐÃ THẤT THỦ!", canvas.width / 2 - 220, canvas.height / 2);
+                return;
+            }
+
             animFrame++;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawScene();
 
-            // Xử lý quân ta
+            // Thợ mỏ
             units.forEach((u, idx) => {
                 if (u.type === 'miner') {
                     if (u.state === 'going') {
@@ -210,31 +214,65 @@ game_html = """
                         }
                     }
                 } else {
-                    let targetX = currentCommand === 'ATTACK' ? canvas.width - 70 : 250;
-                    if (u.x < targetX) u.x += u.speed;
+                    // Kiểm tra kẻ địch gần nhất
+                    let nearestEnemy = enemies.find(e => Math.abs(e.x - u.x) <= u.range);
                     
-                    // Tấn công tượng địch
-                    if (u.x >= canvas.width - 80) {
-                        enemyStatueHp -= 1;
-                        updateUI();
+                    if (nearestEnemy) {
+                        // Tấn công quân địch
+                        if (u.attackCd > 0) u.attackCd--;
+                        else {
+                            nearestEnemy.hp -= u.dmg;
+                            addFloatingText("-" + u.dmg, nearestEnemy.x, nearestEnemy.y - 15, '#e74c3c');
+                            u.attackCd = 30;
+                        }
+                    } else {
+                        // Di chuyển theo lệnh hoặc tiến đánh tượng địch
+                        let targetX = currentCommand === 'ATTACK' ? canvas.width - 70 : 250;
+                        if (u.x < targetX) {
+                            u.x += u.speed;
+                        } else if (currentCommand === 'ATTACK' && u.x >= canvas.width - 80) {
+                            // Tấn công tượng Empire
+                            if (u.attackCd > 0) u.attackCd--;
+                            else {
+                                enemyStatueHp -= u.dmg;
+                                addFloatingText("-" + u.dmg, canvas.width - 60, 180, '#ffcc00');
+                                u.attackCd = 35;
+                                updateUI();
+                            }
+                        }
                     }
                 }
                 drawCharacter(u, false);
                 if (u.hp <= 0) units.splice(idx, 1);
             });
 
-            // Xử lý quái địch
+            // Quái vật
             enemies.forEach((e, idx) => {
-                e.x -= e.speed;
-                if (e.x <= 70) {
-                    statueHp -= 2;
-                    updateUI();
+                let nearestUnit = units.find(u => u.type !== 'miner' && Math.abs(u.x - e.x) <= e.range);
+
+                if (nearestUnit) {
+                    if (e.attackCd > 0) e.attackCd--;
+                    else {
+                        nearestUnit.hp -= e.dmg;
+                        addFloatingText("-" + e.dmg, nearestUnit.x, nearestUnit.y - 15, '#e74c3c');
+                        e.attackCd = 35;
+                    }
+                } else {
+                    e.x -= e.speed;
+                    if (e.x <= 70) {
+                        if (e.attackCd > 0) e.attackCd--;
+                        else {
+                            statueHp -= e.dmg;
+                            addFloatingText("-" + e.dmg, 50, 180, '#e74c3c');
+                            e.attackCd = 40;
+                            updateUI();
+                        }
+                    }
                 }
                 drawCharacter(e, true);
                 if (e.hp <= 0) enemies.splice(idx, 1);
             });
 
-            // Text bay
             floatingTexts.forEach((ft, idx) => {
                 ft.y -= 0.6; ft.alpha -= 0.02;
                 ctx.fillStyle = ft.color;
