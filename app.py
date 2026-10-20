@@ -16,7 +16,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<h1 class='title-text'>⭐ KHÁNG CHIẾN VIỆT NAM - CHIẾN DỊCH TỔNG LỰC ⭐</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-text'>Đã sửa lỗi kẹt Màn 2 (Lỗi Máu Ảo). Tối ưu logic chuyển cảnh và Cutscene Ending!</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-text'>Thêm BOSS Khủng ở Màn 3, Hạt Vật Lý Máu & Mảnh vỡ, Cutscene Tuyên Ngôn Hoàn Hảo!</p>", unsafe_allow_html=True)
 
 game_html = """
 <!DOCTYPE html>
@@ -81,8 +81,8 @@ game_html = """
     <script>
         // ======================= AUDIO ENGINE =======================
         let bgMusic = new Audio(); bgMusic.loop = true; bgMusic.volume = 0.4;
-        let speechAudio = new Audio('https://upload.wikimedia.org/wikipedia/commons/e/e4/Tuyen_ngon_doc_lap.ogg');
-        speechAudio.volume = 0.8;
+        let speechAudio = new Audio('https://upload.wikimedia.org/wikipedia/commons/e/e4/Tuyen_ngon_doc_lap.ogg'); // File âm thanh Tuyên Ngôn
+        speechAudio.volume = 0.9;
         
         function playExternalMusic(url) { bgMusic.src = url; bgMusic.play().catch(e => console.log("Blocked by browser")); }
         
@@ -142,7 +142,7 @@ game_html = """
                 if (this.y >= this.groundY) {
                     this.y = this.groundY;
                     if (this.type === 'debris') { this.vy *= -0.5; this.vx *= 0.5; }
-                    else if (this.type === 'blood') { this.vy = 0; this.vx = 0; this.decay = 0.002; }
+                    else if (this.type === 'blood') { this.vy = 0; this.vx = 0; this.decay = 0.002; } // Máu dính đất
                 }
                 
                 this.alpha -= this.decay;
@@ -161,7 +161,7 @@ game_html = """
                 for (let i = 0; i < count; i++) this.particles.push(new Particle(x, y, color, type));
             }
             updateAndDraw(ctx) {
-                if (this.particles.length > 500) this.particles.splice(0, this.particles.length - 500);
+                if (this.particles.length > 500) this.particles.splice(0, this.particles.length - 500); // Tối ưu
                 this.particles.forEach(p => p.updateAndDraw(ctx));
                 this.particles = this.particles.filter(p => p.active);
             }
@@ -171,7 +171,7 @@ game_html = """
         class Projectile {
             constructor(x, y, target, type, dmg, isEnemy) {
                 this.x = x; this.y = y; this.target = target; this.type = type; this.dmg = dmg; this.isEnemy = isEnemy;
-                this.speed = type === 'arrow' ? 12 : (type === 'cannon' ? 15 : 7);
+                this.speed = type === 'arrow' ? 12 : (type === 'cannon' ? 15 : (type === 'boss_laser' ? 18 : 7));
                 this.active = true;
                 let dx = target.x - x; let dy = target.y - y; let dist = Math.hypot(dx, dy);
                 this.vx = (dx / dist) * this.speed; this.vy = (dy / dist) * this.speed;
@@ -189,6 +189,11 @@ game_html = """
                     ctx.fillStyle = "#e67e22"; ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2); ctx.fill();
                     ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI*2); ctx.fill();
                     particles.emit(this.x, this.y, '#7f8c8d', 'smoke', 1); 
+                } else if (this.type === 'boss_laser') {
+                    ctx.shadowBlur = 20; ctx.shadowColor = "#e74c3c";
+                    ctx.fillStyle = "#ff0000"; ctx.fillRect(-15, -4, 30, 8);
+                    ctx.fillStyle = "#fff"; ctx.fillRect(-10, -2, 20, 4);
+                    particles.emit(this.x, this.y, '#e74c3c', 'spark', 2);
                 } else if (this.type === 'magic') {
                     ctx.shadowBlur = 15; ctx.shadowColor = this.isEnemy ? "#e74c3c" : "#3498db";
                     ctx.fillStyle = this.isEnemy ? "#c0392b" : "#2980b9";
@@ -199,9 +204,9 @@ game_html = """
 
                 if (this.target && this.target.hp > 0) {
                     let hitDist = Math.hypot(this.target.x - this.x, this.target.y - this.y);
-                    if (hitDist < 25) {
+                    if (hitDist < (this.type==='boss_laser'? 35 : 25)) {
                         this.target.hp -= this.dmg;
-                        if(this.type === 'cannon') {
+                        if(this.type === 'cannon' || this.type === 'boss_laser') {
                             particles.emit(this.x, this.y, '#e74c3c', 'spark', 20);
                             particles.emit(this.x, this.y, '#333', 'debris', 10);
                         } else if (this.type === 'arrow') {
@@ -221,7 +226,7 @@ game_html = """
                 this.x = x; this.y = y; this.type = type; this.isEnemy = isEnemy;
                 this.hp = stats.hp; this.maxHp = stats.hp; this.dmg = stats.dmg;
                 this.range = stats.range; this.speed = stats.speed; this.size = stats.size;
-                this.attackCd = 0; this.maxCd = type === 'giant' ? 90 : 40; 
+                this.attackCd = 0; this.maxCd = type === 'giant' ? 90 : (type === 'boss' ? 70 : 40); 
                 this.state = 'spawning'; this.spawnY = -100; 
                 this.goldBag = 0; this.mineTarget = null; this.techLevel = techLevel;
             }
@@ -229,10 +234,11 @@ game_html = """
             draw(ctx, animFrame, isHiding = false) {
                 ctx.save();
                 
+                // Hiệu ứng nhảy dù viện binh
                 if (this.state === 'spawning') {
                     this.spawnY += 6; ctx.translate(this.x, this.spawnY);
                     if (this.spawnY >= this.y) { this.state = 'going'; this.spawnY = this.y; }
-                    if(this.spawnY < this.y - 15) {
+                    if(this.spawnY < this.y - 15 && this.type !== 'boss') {
                         ctx.fillStyle = this.isEnemy ? "#555" : "#bdc3c7"; 
                         ctx.beginPath(); ctx.arc(0, -45, 25, Math.PI, 0); ctx.fill();
                         ctx.strokeStyle = "#fff"; ctx.lineWidth=1.5;
@@ -243,8 +249,8 @@ game_html = """
                     ctx.translate(this.x, this.y);
                 }
 
-                if (!this.isEnemy && isHiding && this.type !== 'giant') { ctx.rotate(Math.PI / 2); ctx.translate(15, -15); }
-                if (this.isEnemy) ctx.scale(-1, 1);
+                if (!this.isEnemy && isHiding && this.type !== 'giant' && this.type !== 'boss') { ctx.rotate(Math.PI / 2); ctx.translate(15, -15); }
+                if (this.isEnemy) ctx.scale(-1, 1); // Flip kẻ địch
 
                 ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 5;
 
@@ -253,10 +259,36 @@ game_html = """
                 if (this.type === 'miner') unitColor = '#d35400';
                 else if (this.type === 'giant') unitColor = this.isEnemy ? '#4a2311' : '#273746'; 
 
-                if (this.type === 'giant') {
+                // VẼ CHI TIẾT THEO CLASS
+                if (this.type === 'boss') {
+                    // SIÊU XE TĂNG BOSS
+                    ctx.fillStyle = "#111"; // Thân xe khổng lồ đen xì
+                    ctx.fillRect(-60, -50, 120, 60);
+                    
+                    // Mắt ngắm đỏ rực
+                    ctx.fillStyle = "#e74c3c"; ctx.shadowBlur = 20; ctx.shadowColor = "#e74c3c";
+                    ctx.fillRect(-30, -30, 20, 10); ctx.shadowBlur = 0;
+                    
+                    // Tháp pháo siêu to
+                    ctx.fillStyle = "#2c3e50"; ctx.beginPath(); ctx.arc(0, -50, 30, Math.PI, 0); ctx.fill();
+                    
+                    let recoil = (this.attackCd > this.maxCd - 15) ? -20 : 0; 
+                    ctx.lineWidth = 15; ctx.strokeStyle = "#0a0a0a";
+                    ctx.beginPath(); ctx.moveTo(0, -60); ctx.lineTo(80 + recoil, -60); ctx.stroke();
+                    
+                    // Nòng súng máy phụ
+                    ctx.lineWidth = 6; ctx.strokeStyle = "#333";
+                    ctx.beginPath(); ctx.moveTo(0, -30); ctx.lineTo(60 + recoil/2, -30); ctx.stroke();
+                    
+                    // Bánh xích bọc thép
+                    ctx.fillStyle = "#0a0a0a"; ctx.fillRect(-70, 10, 140, 20); 
+                    ctx.fillStyle = "#7f8c8d";
+                    let treadOffset = (this.state === 'going' ? (animFrame % 20) : 0) - 60;
+                    for(let i=treadOffset; i<=60; i+=20) { ctx.beginPath(); ctx.arc(i, 20, 8, 0, Math.PI*2); ctx.fill(); }
+                } else if (this.type === 'giant') {
+                    // XE TĂNG THƯỜNG
                     ctx.fillStyle = unitColor;
-                    if(ctx.roundRect) ctx.roundRect(-35, -25, 70, 30, 6); else ctx.fillRect(-35, -25, 70, 30);
-                    ctx.fill();
+                    ctx.fillRect(-35, -25, 70, 30);
                     ctx.fillStyle = this.isEnemy ? "#2c1005" : "#1a252f"; 
                     ctx.beginPath(); ctx.arc(-15, -15, 8, 0, Math.PI*2); ctx.fill();
                     ctx.beginPath(); ctx.arc(20, -5, 12, 0, Math.PI*2); ctx.fill();
@@ -273,6 +305,7 @@ game_html = """
                     ctx.beginPath(); ctx.moveTo(0, -30); ctx.lineTo(45 + recoil, -30); ctx.stroke();
                     ctx.fillStyle = "#555"; ctx.fillRect(40 + recoil, -33, 8, 6);
                 } else {
+                    // BỘ BINH
                     ctx.fillStyle = this.isEnemy ? "#d68910" : "#f5cba7";
                     ctx.beginPath(); ctx.arc(0, -20 * this.size, 7 * this.size, 0, Math.PI * 2); ctx.fill();
                     
@@ -324,11 +357,13 @@ game_html = """
                     ctx.beginPath(); ctx.moveTo(4, 2 * this.size); ctx.lineTo(6 * this.size, 14 * this.size - swing); ctx.stroke();
                 }
 
+                // THANH MÁU HIỆU ỨNG TỤT TỪ TỪ
                 ctx.shadowColor = 'transparent'; 
-                ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(-20, -55, 40, 6);
+                let hpBarY = this.type === 'boss' ? -90 : -55;
+                ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(-20, hpBarY, 40, 6);
                 let hpPercent = Math.max(0, this.hp / this.maxHp);
                 ctx.fillStyle = hpPercent > 0.5 ? "#2ecc71" : (hpPercent > 0.2 ? "#f1c40f" : "#e74c3c");
-                ctx.fillRect(-19, -54, 38 * hpPercent, 4);
+                ctx.fillRect(-19, hpBarY+1, 38 * hpPercent, 4);
                 
                 ctx.restore();
             }
@@ -355,6 +390,7 @@ game_html = """
                 
                 this.ourEmergencyTriggered = false; this.enemyEmergencyTriggered = false;
                 this.ourShieldTimer = 0; this.enemyShieldTimer = 0;
+                this.bossSpawned = false; // Check Boss
 
                 this.particles = new ParticleSystem();
                 this.projectiles = []; 
@@ -372,19 +408,21 @@ game_html = """
                 this.stars = Array.from({length: 100}, () => ({x: Math.random()*1200, y: Math.random()*200, radius: Math.random()*1.5+0.5, blink: Math.random()*0.1}));
                 this.rain = Array.from({length: 200}, () => ({x: Math.random()*1500, y: Math.random()*450, speedY: 20+Math.random()*15, speedX: -4-Math.random()*5}));
 
-                this.speechY = this.canvas.height;
+                this.speechY = this.canvas.height + 50;
                 this.speechLines = [
                     "Hỡi đồng bào cả nước,",
                     "Tất cả mọi người đều sinh ra có quyền bình đẳng.",
                     "Tạo hóa cho họ những quyền không ai có thể xâm phạm được;",
-                    "Trong những quyền ấy, có quyền được sống, quyền tự do và quyền mưu cầu hạnh phúc.",
+                    "Trong những quyền ấy, có quyền được sống,",
+                    "quyền tự do và quyền mưu cầu hạnh phúc.",
                     "...",
                     "Nước Việt Nam có quyền hưởng tự do và độc lập,",
                     "và sự thật đã thành một nước tự do độc lập.",
                     "Toàn thể dân tộc Việt Nam quyết đem tất cả tinh thần và lực lượng,",
                     "tính mạng và của cải để giữ vững quyền tự do, độc lập ấy.",
                     "",
-                    "⭐ CHIẾN DỊCH HOÀN TOÀN THẮNG LỢI ⭐"
+                    "⭐ CHIẾN DỊCH HOÀN TOÀN THẮNG LỢI ⭐",
+                    "Cảm ơn bạn đã trải nghiệm!"
                 ];
 
                 this.initListeners();
@@ -403,7 +441,7 @@ game_html = """
                         return; 
                     }
                     if (this.state === 'GAME_OVER') { this.resetGame(true); this.state = 'MENU'; this.run(); return; }
-                    if (this.state === 'VICTORY_SPEECH') { this.resetGame(true); this.state = 'MENU'; return; }
+                    if (this.state === 'VICTORY_SPEECH') { stopAllAudio(); this.resetGame(true); this.state = 'MENU'; return; }
                 });
 
                 document.getElementById('btnAttack').onclick = () => this.setCommand('ATTACK');
@@ -436,20 +474,8 @@ game_html = """
                 this.airRaidWarning = 250; playAirRaidSiren();
             }
 
-            nextLevel() {
-                this.level++; 
-                if (this.level > this.maxLevel) { 
-                    this.state = 'VICTORY_SPEECH'; 
-                    bgMusic.pause(); 
-                    speechAudio.play().catch(e=>console.log("Audio blocked")); 
-                    return; 
-                }
-                this.canvas.style.background = this.mapColors[this.level].sky;
-                this.resetGame(false); this.state = 'MENU'; 
-            }
-
             resetGame(fullReset = true) {
-                if(fullReset) { this.level = 1; this.canvas.style.background = this.mapColors[1].sky; this.techLevel = 1; this.gold = 500; this.speechY = this.canvas.height; }
+                if(fullReset) { this.level = 1; this.canvas.style.background = this.mapColors[1].sky; this.techLevel = 1; this.gold = 500; this.speechY = this.canvas.height + 50; }
                 else { this.gold += 1000; } 
                 
                 this.statueHp = 3000; this.enemyStatueHp = 3000 + (this.level * 2500); 
@@ -459,7 +485,7 @@ game_html = """
                 this.transitionTimer = 0;
                 
                 this.ourEmergencyTriggered = false; this.enemyEmergencyTriggered = false;
-                this.ourShieldTimer = 0; this.enemyShieldTimer = 0;
+                this.ourShieldTimer = 0; this.enemyShieldTimer = 0; this.bossSpawned = false;
                 
                 this.goldMines.forEach(m => m.miner = null);
                 this.updateUI();
@@ -519,22 +545,20 @@ game_html = """
 
             updateUI() {
                 document.getElementById("levelText").innerText = this.level;
-                // FIX LỖI MÁU ẢO (Dùng Math.ceil để hiển thị 1 nếu máu còn 0.1)
                 document.getElementById("hpText").innerText = Math.ceil(this.statueHp);
                 document.getElementById("enemyHpText").innerText = Math.ceil(this.enemyStatueHp);
                 document.getElementById("goldText").innerText = Math.floor(this.gold);
                 document.getElementById("popText").innerText = this.getCurrentPopulation();
                 
-                if(this.ourShieldTimer > 0) document.getElementById("ourShield").innerText = `(GIÁP TỬ THỦ: ${Math.ceil(this.ourShieldTimer/60)}s)`;
+                if(this.ourShieldTimer > 0) document.getElementById("ourShield").innerText = `(TỬ THỦ: ${Math.ceil(this.ourShieldTimer/60)}s)`;
                 else document.getElementById("ourShield").innerText = "";
                 
-                if(this.enemyShieldTimer > 0) document.getElementById("enemyShield").innerText = `(GIÁP TỬ THỦ: ${Math.ceil(this.enemyShieldTimer/60)}s)`;
+                if(this.enemyShieldTimer > 0) document.getElementById("enemyShield").innerText = `(TỬ THỦ: ${Math.ceil(this.enemyShieldTimer/60)}s)`;
                 else document.getElementById("enemyShield").innerText = "";
             }
 
             drawEnvironment() {
                 let env = this.mapColors[this.level];
-                
                 if(env.sun) {
                     this.ctx.fillStyle = "rgba(241, 196, 15, 0.9)"; this.ctx.shadowBlur = 50; this.ctx.shadowColor = "#f1c40f";
                     this.ctx.beginPath(); this.ctx.arc(100, 70, 35, 0, Math.PI*2); this.ctx.fill(); this.ctx.shadowBlur = 0;
@@ -546,13 +570,12 @@ game_html = """
                     this.ctx.shadowBlur = 0;
                 }
 
-                this.ctx.fillStyle = env.mtn1;
-                this.ctx.beginPath(); this.ctx.moveTo(0, 200);
+                // Parallax Mountains
+                this.ctx.fillStyle = env.mtn1; this.ctx.beginPath(); this.ctx.moveTo(0, 200);
                 for(let i=0; i<=this.canvas.width; i+=100) { this.ctx.lineTo(i, 100 + Math.sin(i*0.01 + this.animFrame*0.005)*40); }
                 this.ctx.lineTo(this.canvas.width, 250); this.ctx.lineTo(0, 250); this.ctx.fill();
                 
-                this.ctx.fillStyle = env.mtn2;
-                this.ctx.beginPath(); this.ctx.moveTo(0, 250);
+                this.ctx.fillStyle = env.mtn2; this.ctx.beginPath(); this.ctx.moveTo(0, 250);
                 for(let i=0; i<=this.canvas.width; i+=80) { this.ctx.lineTo(i, 150 + Math.cos(i*0.02 + this.animFrame*0.01)*50); }
                 this.ctx.lineTo(this.canvas.width, 250); this.ctx.lineTo(0, 250); this.ctx.fill();
 
@@ -599,8 +622,8 @@ game_html = """
                 this.ctx.fillStyle = "#3e2723"; 
                 this.ctx.fillRect(10, 130, 25, 30); this.ctx.fillRect(45, 130, 25, 30); this.ctx.fillRect(80, 130, 20, 30); 
                 
-                this.ctx.fillStyle = "#8d6e63"; this.ctx.beginPath(); if(this.ctx.roundRect) this.ctx.roundRect(90, 320, 30, 20, 5); else this.ctx.fillRect(90, 320, 30, 20); this.ctx.fill();
-                this.ctx.fillStyle = "#795548"; this.ctx.beginPath(); if(this.ctx.roundRect) this.ctx.roundRect(105, 305, 25, 20, 5); else this.ctx.fillRect(105, 305, 25, 20); this.ctx.fill();
+                this.ctx.fillStyle = "#8d6e63"; this.ctx.fillRect(90, 320, 30, 20);
+                this.ctx.fillStyle = "#795548"; this.ctx.fillRect(105, 305, 25, 20);
                 
                 if(this.ourShieldTimer > 0) {
                     this.ctx.shadowBlur = 40; this.ctx.shadowColor = "#3498db";
@@ -665,35 +688,50 @@ game_html = """
                 
                 if (this.level === 1) subtitle = "MÀN 1: BẢO VỆ VÙNG GIẢI PHÓNG - Cẩn thận máy bay ném bom mỗi 60s!";
                 else if (this.level === 2) subtitle = "MÀN 2: TẬP KÍCH BAN ĐÊM - Địch tử thủ (Dưới 50% HP) gọi viện binh!";
-                else if (this.level === 3) subtitle = "MÀN 3: HOÀNG HÔN ĐẪM MÁU - Trận chiến sinh tử. Quân ta thủ thành GIẢM 90% DMG!";
+                else if (this.level === 3) subtitle = "MÀN 3: HOÀNG HÔN ĐẪM MÁU - Siêu BOSS xuất hiện! Thành Ta GIẢM 90% DMG!";
                 
                 this.ctx.fillStyle = "#ecf0f1"; this.ctx.font = "italic 20px 'Segoe UI'";
                 this.ctx.fillText(subtitle, this.canvas.width / 2, this.canvas.height / 2 + 10);
-                this.ctx.fillStyle = "linear-gradient(145deg, #1b4f72, #0d283a)"; this.ctx.fillRect(this.canvas.width / 2 - 140, this.canvas.height / 2 + 50, 280, 50);
+                this.ctx.fillStyle = "linear-gradient(145deg, #1b4f72, #0d283a)"; this.ctx.fillRect(this.canvas.width / 2 - 160, this.canvas.height / 2 + 50, 320, 50);
                 this.ctx.fillStyle = "#f1c40f"; this.ctx.font = "bold 20px 'Segoe UI'";
                 this.ctx.fillText(btnText, this.canvas.width / 2, this.canvas.height / 2 + 82); this.ctx.textAlign = "left";
             }
             
             drawVictorySpeech() {
+                // Background Điện ảnh: Cờ đỏ Sao Vàng xoay
                 this.ctx.fillStyle = "#c0392b"; this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                 
                 this.ctx.save(); this.ctx.translate(this.canvas.width/2, this.canvas.height/2); this.ctx.rotate(this.animFrame*0.005);
-                this.ctx.fillStyle = "rgba(241, 196, 15, 0.3)"; this.ctx.beginPath();
-                for(let i=0; i<5; i++) { this.ctx.lineTo(Math.cos((18+i*72)*Math.PI/180)*250, -Math.sin((18+i*72)*Math.PI/180)*250); this.ctx.lineTo(Math.cos((54+i*72)*Math.PI/180)*100, -Math.sin((54+i*72)*Math.PI/180)*100); }
+                this.ctx.fillStyle = "rgba(241, 196, 15, 0.4)"; this.ctx.beginPath();
+                for(let i=0; i<5; i++) { 
+                    this.ctx.lineTo(Math.cos((18+i*72)*Math.PI/180)*250, -Math.sin((18+i*72)*Math.PI/180)*250); 
+                    this.ctx.lineTo(Math.cos((54+i*72)*Math.PI/180)*100, -Math.sin((54+i*72)*Math.PI/180)*100); 
+                }
                 this.ctx.closePath(); this.ctx.fill(); this.ctx.restore();
                 
-                this.ctx.fillStyle = "#f1c40f"; this.ctx.font = "bold 26px 'Segoe UI'"; this.ctx.textAlign = "center";
-                this.ctx.shadowBlur = 10; this.ctx.shadowColor = "#000";
+                // Hiệu ứng pháo hoa bắn liên tục
+                if (this.animFrame % 40 === 0) {
+                    this.particles.emit(Math.random()*this.canvas.width, Math.random()*this.canvas.height/2 + 50, '#f1c40f', 'spark', 40);
+                    this.particles.emit(Math.random()*this.canvas.width, Math.random()*this.canvas.height/2 + 50, '#e74c3c', 'spark', 40);
+                }
+                this.particles.updateAndDraw(this.ctx);
                 
-                for(let i=0; i<this.speechLines.length; i++) { this.ctx.fillText(this.speechLines[i], this.canvas.width/2, this.speechY + i*45); }
+                // Chữ cuộn (Credit Text)
+                this.ctx.fillStyle = "#f1c40f"; this.ctx.font = "bold 30px 'Segoe UI'"; this.ctx.textAlign = "center";
+                this.ctx.shadowBlur = 15; this.ctx.shadowColor = "#000";
+                
+                for(let i=0; i<this.speechLines.length; i++) { 
+                    this.ctx.fillText(this.speechLines[i], this.canvas.width/2, this.speechY + i*55); 
+                }
                 this.ctx.textAlign = "left"; this.ctx.shadowBlur = 0;
                 
-                this.speechY -= 0.6; 
+                this.speechY -= 0.6; // Tốc độ cuộn chậm rãi hào hùng
                 
-                if(this.speechY < -200) {
-                    this.ctx.fillStyle = "rgba(0,0,0,0.8)"; this.ctx.fillRect(this.canvas.width/2 - 100, this.canvas.height - 60, 200, 40);
-                    this.ctx.fillStyle = "#fff"; this.ctx.font = "bold 16px 'Segoe UI'"; this.ctx.textAlign = "center";
-                    this.ctx.fillText("BẤM ĐỂ CHƠI LẠI TỪ ĐẦU", this.canvas.width/2, this.canvas.height - 35); this.ctx.textAlign = "left";
+                // Nút Skip/Replay
+                if(this.speechY < -700) {
+                    this.ctx.fillStyle = "rgba(0,0,0,0.8)"; this.ctx.fillRect(this.canvas.width/2 - 140, this.canvas.height - 70, 280, 50);
+                    this.ctx.fillStyle = "#fff"; this.ctx.font = "bold 18px 'Segoe UI'"; this.ctx.textAlign = "center";
+                    this.ctx.fillText("BẤM VÀO ĐÂY ĐỂ CHƠI LẠI TỪ ĐẦU", this.canvas.width/2, this.canvas.height - 38); this.ctx.textAlign = "left";
                 }
             }
             
@@ -715,22 +753,24 @@ game_html = """
             }
 
             run() {
+                // Xử lý Cutscene Điện ảnh Độc Lập
                 if (this.state === 'VICTORY_SPEECH') {
                     this.animFrame++; this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
                     this.drawVictorySpeech();
                     requestAnimationFrame(() => this.run()); return;
                 }
 
+                // Check thua
                 if (this.statueHp <= 0 && this.state === 'PLAYING') { 
                     this.state = 'GAME_OVER'; 
                     this.drawMenuOverlay("💀 THÀNH TRÌ ĐÃ VỠ!", "Quân ta đã hy sinh anh dũng tại Màn " + this.level, "BẤM VÀO ĐÂY ĐỂ CHƠI LẠI", "#e74c3c"); 
                     return; 
                 }
                 
-                // FIX LỖI MÁU ẢO KẸT MÀN
+                // Check thắng màn (Đã fix lỗi Máu Ảo làm kẹt màn)
                 if (this.enemyStatueHp <= 0 && this.state === 'PLAYING') {
                     this.state = 'TRANSITION';
-                    this.transitionTimer = 180; // Dừng lại ngắm chiến thắng 3 giây trước khi qua màn
+                    this.transitionTimer = 150; // Chờ 2.5 giây ngắm thành địch sập
                     if (this.level >= this.maxLevel) {
                         this.addFloatingText("⭐ ĐẠI THẮNG MÙA XUÂN! ĐANG CHUYỂN CẢNH...", this.canvas.width/2-200, this.canvas.height/2, '#f1c40f', true);
                     } else {
@@ -738,10 +778,18 @@ game_html = """
                     }
                 }
                 
+                // Bộ đếm chuyển cảnh mượt mà không dùng setTimeout
                 if (this.state === 'TRANSITION') {
                     this.transitionTimer--;
                     if (this.transitionTimer <= 0) {
-                        this.nextLevel();
+                        this.level++;
+                        if (this.level > this.maxLevel) {
+                            this.state = 'VICTORY_SPEECH';
+                            bgMusic.pause(); speechAudio.play().catch(e=>console.log("Audio bị chặn"));
+                        } else {
+                            this.canvas.style.background = this.mapColors[this.level].sky;
+                            this.resetGame(false); this.state = 'MENU';
+                        }
                     }
                 }
 
@@ -751,6 +799,7 @@ game_html = """
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 this.drawEnvironment(); this.drawBases();
 
+                // Vẽ Menu
                 if (this.state === 'MENU') { 
                     this.drawMenuOverlay("MÀN " + this.level + ": SẴN SÀNG CHIẾN ĐẤU", "", "BẤM ĐỂ XUẤT QUÂN", "#3498db"); 
                     this.ctx.restore(); requestAnimationFrame(() => this.run()); return; 
@@ -762,6 +811,16 @@ game_html = """
                 if (this.enemyShieldTimer > 0) this.enemyShieldTimer--;
                 
                 let enemyMaxHp = 3000 + (this.level * 2500);
+                
+                // SINH BOSS MÀN 3 KHI ĐỊCH DƯỚI 70% MÁU
+                if (this.level === 3 && this.enemyStatueHp <= enemyMaxHp * 0.7 && !this.bossSpawned && this.state === 'PLAYING') {
+                    this.bossSpawned = true;
+                    let stats = { hp: 12000, dmg: 180, range: 350, speed: 0.4, size: 3.5 };
+                    this.enemies.push(new GameObject(this.canvas.width - 150, 180, 'boss', true, stats, this.techLevel));
+                    this.addFloatingText("⚠️ CẢNH BÁO: SIÊU VŨ KHÍ BOSS XUẤT HIỆN!", this.canvas.width/2-250, 150, '#e74c3c', true);
+                    this.screenShake = 60; playAirRaidSiren();
+                }
+
                 if (this.enemyStatueHp <= enemyMaxHp/2 && !this.enemyEmergencyTriggered && this.state === 'PLAYING') {
                     this.enemyEmergencyTriggered = true; this.enemyShieldTimer = 900; 
                     this.spawnEmergencyUnits(true);
@@ -868,7 +927,6 @@ game_html = """
                                             this.projectiles.push(new Projectile(u.x, u.y-25, {x: this.canvas.width-100, y: 260, hp: 9999}, pType, actualDmg, false));
                                             if (u.type === 'giant') this.screenShake = 8;
                                         }
-                                        // FIX MÁU ẢO ÉP VỀ 0
                                         this.enemyStatueHp = Math.max(0, this.enemyStatueHp - actualDmg); 
                                         setTimeout(() => { this.particles.emit(this.canvas.width - 100, 260, '#f1c40f', 'spark', 25); this.addFloatingText("-" + Math.floor(actualDmg), this.canvas.width - 100, 200 + Math.random()*50, '#f1c40f', true); }, 200);
                                         u.attackCd = u.maxCd; 
@@ -886,7 +944,8 @@ game_html = """
                     if (nearestUnit && !this.isHiding) { 
                         if (e.attackCd > 0) e.attackCd--;
                         else { 
-                            if(e.type === 'shadow_mage') this.projectiles.push(new Projectile(e.x, e.y-25, nearestUnit, 'magic', e.dmg, true));
+                            if(e.type === 'boss') { this.projectiles.push(new Projectile(e.x-80, e.y-60, nearestUnit, 'boss_laser', e.dmg, true)); this.screenShake = 15; }
+                            else if(e.type === 'shadow_mage') this.projectiles.push(new Projectile(e.x, e.y-25, nearestUnit, 'magic', e.dmg, true));
                             else if(e.type === 'giant') { this.projectiles.push(new Projectile(e.x-40, e.y-25, nearestUnit, 'cannon', e.dmg, true)); this.screenShake = 8; }
                             else {
                                 nearestUnit.hp -= e.dmg; this.particles.emit(nearestUnit.x, nearestUnit.y, '#c0392b', 'blood', 15); 
@@ -903,12 +962,12 @@ game_html = """
                                 if(this.ourShieldTimer > 0) { dmgMult = this.level === 1 ? 0.5 : (this.level === 2 ? 0.3 : 0.1); }
                                 let actualDmg = e.dmg * dmgMult;
                                 
-                                if(e.type === 'shadow_mage' || e.type === 'giant') {
+                                if(e.type === 'boss') { this.projectiles.push(new Projectile(e.x-80, e.y-60, {x: 100, y: 260, hp: 9999}, 'boss_laser', actualDmg, true)); this.screenShake = 15; }
+                                else if(e.type === 'shadow_mage' || e.type === 'giant') {
                                     let pType = e.type === 'giant' ? 'cannon' : 'magic';
                                     this.projectiles.push(new Projectile(e.x, e.y-25, {x: 100, y: 260, hp: 9999}, pType, actualDmg, true));
                                     if (e.type === 'giant') this.screenShake = 8;
                                 }
-                                // FIX MÁU ẢO ÉP VỀ 0
                                 this.statueHp = Math.max(0, this.statueHp - actualDmg); 
                                 setTimeout(() => { this.particles.emit(100, 260, '#e74c3c', 'spark', 25); this.addFloatingText("-" + Math.floor(actualDmg), 100, 200 + Math.random()*50, '#e74c3c', true); }, 200);
                                 e.attackCd = e.maxCd; 
@@ -916,7 +975,11 @@ game_html = """
                         } else { e.x -= e.speed; }
                     }
                     e.draw(this.ctx, this.animFrame, false); 
-                    if (e.hp <= 0) { this.particles.emit(e.x, e.y, '#7f8c8d', 'smoke', 25); this.particles.emit(e.x, e.y, '#333', 'debris', 5); this.enemies.splice(idx, 1); this.gold += (40 + this.level*15); this.addFloatingText("+" + (40 + this.level*15), e.x, e.y-20, '#f1c40f'); }
+                    if (e.hp <= 0) { 
+                        this.particles.emit(e.x, e.y, '#7f8c8d', 'smoke', 30); this.particles.emit(e.x, e.y, '#333', 'debris', 10); 
+                        if(e.type === 'boss') this.screenShake = 60; // Nổ rung trời khi diệt boss
+                        this.enemies.splice(idx, 1); this.gold += (40 + this.level*15); this.addFloatingText("+" + (40 + this.level*15), e.x, e.y-20, '#f1c40f'); 
+                    }
                 });
 
                 this.floatingTexts.forEach((ft, idx) => { 
