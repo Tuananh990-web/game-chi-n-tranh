@@ -16,7 +16,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<h1 class='title-text'>⭐ KHÁNG CHIẾN VIỆT NAM - CHIẾN DỊCH TOÀN DIỆN ⭐</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-text'>Bổ sung Cơ chế Chui Hầm, Còi Báo Động, Đa Cấp Độ (Maps) & Chơi Lại!</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-text'>Bổ sung Lời dẫn truyện qua màn, Sửa lỗi đứng hình & Cấp độ kẻ địch!</p>", unsafe_allow_html=True)
 
 game_html = """
 <!DOCTYPE html>
@@ -26,7 +26,6 @@ game_html = """
     <title>Khang Chien Viet Nam Full FX</title>
     <style>
         body { margin: 0; background: #0d1b1e; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; overflow: hidden; user-select: none; }
-        /* Canvas sẽ được đổi màu background bằng JavaScript tùy theo Level */
         canvas { background: #145a32; border: 4px solid #f1c40f; border-radius: 10px; box-shadow: 0 10px 30px rgba(241, 196, 15, 0.2); display: block; margin: 4px auto; cursor: pointer; }
         .ui-panel { display: flex; justify-content: center; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
         .cmd-panel { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
@@ -53,7 +52,6 @@ game_html = """
 
     <div class="music-panel">
         <span style="font-size:12px; font-weight:bold; color:#f1c40f; align-self:center;">🎵 NHẠC & ÂM THANH:</span>
-        <!-- BẠN CÓ THỂ THAY ĐƯỜNG LINK MP3 CỦA BẠN VÀO TRONG DẤU NGOẶC KÉP BÊN DƯỚI -->
         <button class="music-btn" onclick="playExternalMusic('https://upload.wikimedia.org/wikipedia/commons/e/e5/Tien_Quan_Ca_instrumental.ogg')">🎶 Tiến Quân Ca</button>
         <button class="music-btn" onclick="playMarchTone()">🎺 Kèn Xung Phong</button>
         <button class="music-btn" onclick="stopAllAudio()">🔇 Tắt Toàn Bộ</button>
@@ -161,7 +159,7 @@ game_html = """
                 ctx.translate(this.x, this.y);
                 
                 // HIỆU ỨNG CHUI HẦM: Lính ta sẽ xoay 90 độ nằm sấp xuống đất
-                if (!this.isEnemy && isHiding) {
+                if (!this.isEnemy && isHiding && this.type !== 'giant') {
                     ctx.rotate(Math.PI / 2);
                     ctx.translate(10, -10); // Điều chỉnh tọa độ khi nằm sấp
                 } else if (this.isSpinning > 0) {
@@ -227,11 +225,11 @@ game_html = """
                         ctx.fillStyle = "#7f8c8d"; ctx.fillRect(this.isEnemy ? -12 : 12, -15, 4, 20); // Khiên/Giáp
                     }
 
-                    // Chân cử động (Dừng lại nếu đang chui hầm)
+                    // Chân cử động
                     ctx.shadowColor = 'transparent'; 
                     ctx.strokeStyle = "#222"; ctx.lineWidth = 3 * this.size;
                     let swing = 0;
-                    if (!isHiding) {
+                    if (!isHiding || this.isEnemy) {
                         swing = (this.state === 'going' || this.state === 'returning') ? Math.sin(animFrame * 0.4) * 6 : 0;
                         if(this.isEnemy) swing = Math.sin(animFrame * 0.4) * 6; 
                     }
@@ -261,13 +259,12 @@ game_html = """
                 this.gameOver = false; this.levelComplete = false; this.showBriefing = true; 
                 this.screenShake = 0; this.animFrame = 0; 
                 
-                // Cơ chế Chui Hầm & Ném bom
                 this.isHiding = false; 
-                this.airRaidWarning = 0; // Đếm ngược cảnh báo
+                this.airRaidWarning = 0; 
                 this.enemyBomberX = -200; 
                 this.isEnemyBomberActive = false;
                 
-                this.planeX = -100; this.isPlaneActive = false; // Máy bay ta
+                this.planeX = -100; this.isPlaneActive = false; 
                 
                 this.particles = new ParticleSystem();
                 this.goldMines = [
@@ -277,9 +274,9 @@ game_html = """
                 this.units = []; this.enemies = []; this.floatingTexts = [];
                 
                 this.mapColors = {
-                    1: { bg: 'linear-gradient(to bottom, #4ca1af 0%, #27ae60 100%)', base1: '#b7950b', base2: '#641e16' }, // Đồng bằng
-                    2: { bg: 'linear-gradient(to bottom, #141e30 0%, #243b55 100%)', base1: '#5a6268', base2: '#343a40' }, // Đêm kích chiến
-                    3: { bg: 'linear-gradient(to bottom, #e55d87 0%, #b33939 100%)', base1: '#8e44ad', base2: '#4a235a' }  // Hoàng hôn đẫm máu
+                    1: { bg: 'linear-gradient(to bottom, #4ca1af 0%, #27ae60 100%)', base1: '#b7950b', base2: '#641e16' }, 
+                    2: { bg: 'linear-gradient(to bottom, #141e30 0%, #243b55 100%)', base1: '#5a6268', base2: '#343a40' }, 
+                    3: { bg: 'linear-gradient(to bottom, #e55d87 0%, #b33939 100%)', base1: '#8e44ad', base2: '#4a235a' }  
                 };
 
                 this.initListeners();
@@ -288,18 +285,32 @@ game_html = """
             initListeners() {
                 this.canvas.addEventListener('click', (e) => {
                     initAudio();
-                    // Click để Tắt Briefing ban đầu
-                    if (this.showBriefing) { this.showBriefing = false; return; }
-                    // Click để Chuyển Level
+                    const rect = this.canvas.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top;
+                    
+                    // Nút XUẤT QUÂN ở Briefing
+                    if (this.showBriefing) { 
+                        if (mouseX >= this.canvas.width / 2 - 60 && mouseX <= this.canvas.width / 2 + 60 && mouseY >= 235 && mouseY <= 275) {
+                            this.showBriefing = false;
+                        }
+                        return; 
+                    }
+                    
+                    // Click Màn Hình Chuyển Level
                     if (this.levelComplete) { this.nextLevel(); return; }
-                    // Click để Chơi Lại khi thua hoặc thắng phá đảo
-                    if (this.gameOver) { this.resetGame(true); return; }
+                    
+                    // Click Chơi Lại khi thua/thắng toàn bộ
+                    if (this.gameOver) { 
+                        this.resetGame(true); 
+                        this.showBriefing = true; 
+                        this.run(); // KHỞI ĐỘNG LẠI VÒNG LẶP SAU KHI THUA
+                        return; 
+                    }
                 });
 
                 document.getElementById('btnAttack').onclick = () => this.setCommand('ATTACK');
                 document.getElementById('btnDefend').onclick = () => this.setCommand('DEFEND');
                 
-                // NÚT CHUI HẦM
                 let btnBunker = document.getElementById('btnBunker');
                 btnBunker.onclick = () => {
                     this.isHiding = !this.isHiding;
@@ -328,7 +339,7 @@ game_html = """
             
             triggerAirRaidWarning() {
                 if (this.isEnemyBomberActive || this.airRaidWarning > 0 || this.showBriefing || this.gameOver || this.levelComplete) return;
-                this.airRaidWarning = 200; // ~3.5 giây cảnh báo
+                this.airRaidWarning = 200; 
                 playAirRaidSiren();
             }
 
@@ -337,16 +348,17 @@ game_html = """
                 if (this.level > this.maxLevel) { this.gameOver = true; return; }
                 this.canvas.style.background = this.mapColors[this.level].bg;
                 this.resetGame(false); // false = không reset toàn bộ, chỉ reset map
+                this.showBriefing = true; // Hiện lại briefing bối cảnh mới
+                this.run(); // KHỞI ĐỘNG LẠI VÒNG LẶP CHO LEVEL MỚI
             }
 
             resetGame(fullReset = true) {
                 if(fullReset) { this.level = 1; this.canvas.style.background = this.mapColors[1].bg; this.techLevel = 1; this.gold = 450; }
                 else { this.gold += 500; } // Thưởng qua màn
                 
-                // Máu tượng địch tăng theo Level
-                this.statueHp = 3000; this.enemyStatueHp = 3000 + (this.level * 1000);
+                this.statueHp = 3000; this.enemyStatueHp = 3000 + (this.level * 1500); // Địch trâu hơn rõ rệt
                 this.units = []; this.enemies = []; this.floatingTexts = [];
-                this.isHiding = false; document.getElementById('btnBunker').innerText = "🕳️ CHUI HẦM TRÚ ẨN";
+                this.isHiding = false; document.getElementById('btnBunker').style.background = "linear-gradient(145deg, #d35400, #a04000)"; document.getElementById('btnBunker').innerText = "🕳️ CHUI HẦM TRÚ ẨN";
                 this.airRaidWarning = 0; this.isEnemyBomberActive = false;
                 
                 this.goldMines.forEach(m => m.miner = null);
@@ -355,7 +367,7 @@ game_html = """
                 this.updateUI();
             }
 
-            setCommand(cmd) { this.currentCommand = cmd; this.isHiding = false; document.getElementById('btnBunker').innerText = "🕳️ CHUI HẦM TRÚ ẨN"; }
+            setCommand(cmd) { this.currentCommand = cmd; this.isHiding = false; document.getElementById('btnBunker').style.background = "linear-gradient(145deg, #d35400, #a04000)"; document.getElementById('btnBunker').innerText = "🕳️ CHUI HẦM TRÚ ẨN"; }
             addFloatingText(text, x, y, color = '#f1c40f') { this.floatingTexts.push({ text, x, y, alpha: 1.0, color }); }
             
             getCurrentPopulation() {
@@ -436,7 +448,6 @@ game_html = """
 
             drawScene() {
                 let bases = this.mapColors[this.level];
-                // Căn cứ ta
                 this.ctx.fillStyle = bases.base1; this.ctx.fillRect(15, 50, 45, 240);
                 this.ctx.fillStyle = "#f1c40f"; this.ctx.beginPath(); this.ctx.arc(37, 45, 18, 0, Math.PI * 2); this.ctx.fill();
 
@@ -446,11 +457,9 @@ game_html = """
                     this.ctx.fillStyle = "#000"; this.ctx.font = "bold 9px 'Segoe UI'"; this.ctx.fillText("V" + (idx + 1), m.x - 5, m.y + 3);
                 });
 
-                // Căn cứ địch
                 this.ctx.fillStyle = bases.base2; this.ctx.fillRect(this.canvas.width - 60, 50, 45, 240);
                 this.ctx.fillStyle = "#922b21"; this.ctx.beginPath(); this.ctx.arc(this.canvas.width - 37, 45, 18, 0, Math.PI * 2); this.ctx.fill();
 
-                // HIỆU ỨNG CẢNH BÁO MÀN HÌNH ĐỎ KHI CÓ CÒI
                 if (this.airRaidWarning > 0) {
                     if (this.animFrame % 20 < 10) {
                         this.ctx.fillStyle = "rgba(231, 76, 60, 0.3)";
@@ -461,12 +470,11 @@ game_html = """
                     this.ctx.textAlign = "left";
                 }
 
-                // VẼ MÁY BAY ĐỊCH THẢ BOM THẢM KHI HẾT CẢNH BÁO
                 if (this.isEnemyBomberActive) {
                     this.enemyBomberX += 10;
                     this.ctx.shadowBlur = 15; this.ctx.shadowColor = 'rgba(0,0,0,0.8)'; this.ctx.shadowOffsetY = 40;
                     
-                    this.ctx.fillStyle = "#111"; // Máy bay địch màu đen
+                    this.ctx.fillStyle = "#111"; 
                     this.ctx.beginPath(); this.ctx.arc(this.enemyBomberX, 40, 25, 0, Math.PI*2); this.ctx.fill();
                     this.ctx.beginPath(); this.ctx.moveTo(this.enemyBomberX + 15, 40); this.ctx.lineTo(this.enemyBomberX - 25, 10); this.ctx.lineTo(this.enemyBomberX - 10, 40); this.ctx.fill();
                     this.ctx.beginPath(); this.ctx.moveTo(this.enemyBomberX + 15, 40); this.ctx.lineTo(this.enemyBomberX - 25, 70); this.ctx.lineTo(this.enemyBomberX - 10, 40); this.ctx.fill();
@@ -474,12 +482,11 @@ game_html = """
                     
                     if (this.enemyBomberX % 50 < 10) {
                         this.screenShake = 15;
-                        this.particles.emit(this.enemyBomberX - 20, 150 + Math.random()*100, '#e74c3c', 30); // Nổ lớn
+                        this.particles.emit(this.enemyBomberX - 20, 150 + Math.random()*100, '#e74c3c', 30); 
                         
-                        // Trừ máu lính ta nếu không chui hầm
                         this.units.forEach(u => {
                             if (!this.isHiding) {
-                                u.hp -= 200; // Sát thương khủng khiếp
+                                u.hp -= 200; 
                                 this.addFloatingText("-200 Bom Địch", u.x, u.y, '#e74c3c');
                             } else {
                                 this.addFloatingText("Né tránh", u.x, u.y, '#2ecc71');
@@ -489,7 +496,6 @@ game_html = """
                     if (this.enemyBomberX > this.canvas.width + 100) this.isEnemyBomberActive = false;
                 }
 
-                // VẼ MÁY BAY TA
                 if (this.isPlaneActive) {
                     this.planeX += 8;
                     this.ctx.shadowBlur = 15; this.ctx.shadowColor = 'rgba(0,0,0,0.6)'; this.ctx.shadowOffsetY = 40;
@@ -499,7 +505,7 @@ game_html = """
                     this.ctx.beginPath(); this.ctx.moveTo(this.planeX - 10, 50); this.ctx.lineTo(this.planeX + 15, 50); this.ctx.lineTo(this.planeX - 15, 80); this.ctx.fill();
                     this.ctx.shadowBlur = 0; this.ctx.shadowOffsetY = 0;
                     
-                    if (this.planeX % 60 < 8) this.particles.emit(this.planeX, 60, '#f1c40f', 15); // Lửa vàng
+                    if (this.planeX % 60 < 8) this.particles.emit(this.planeX, 60, '#f1c40f', 15); 
                     if (this.planeX > this.canvas.width + 100) this.isPlaneActive = false;
                 }
             }
@@ -509,17 +515,32 @@ game_html = """
                 this.ctx.fillStyle = "#f5f5dc"; this.ctx.fillRect(130, 40, this.canvas.width - 260, 280);
                 this.ctx.strokeStyle = "#d7ccc8"; this.ctx.lineWidth = 3; this.ctx.strokeRect(130, 40, this.canvas.width - 260, 280);
 
-                this.ctx.fillStyle = "#111"; this.ctx.font = "bold 22px 'Segoe UI'"; this.ctx.textAlign = "center";
-                this.ctx.fillText("Bảo Vệ Vùng Giải Phóng", this.canvas.width / 2, 85);
-                this.ctx.font = "14px 'Segoe UI'";
-                this.ctx.fillText("Kẻ địch sẽ dùng Không Quân rải bom thảm sát. Khi nghe CÒI BÁO ĐỘNG,", this.canvas.width / 2, 125);
-                this.ctx.fillText("hãy lập tức ấn nút [CHUI HẦM] để bảo toàn lực lượng!", this.canvas.width / 2, 148);
+                this.ctx.fillStyle = "#111"; this.ctx.textAlign = "center";
+                
+                // LỜI DẪN TRUYỆN QUA TỪNG LEVEL
+                if (this.level === 1) {
+                    this.ctx.font = "bold 22px 'Segoe UI'"; this.ctx.fillText("Bảo Vệ Vùng Giải Phóng (Level 1)", this.canvas.width / 2, 85);
+                    this.ctx.font = "14px 'Segoe UI'";
+                    this.ctx.fillText("Kẻ địch sẽ dùng Không Quân rải bom thảm sát. Khi nghe CÒI BÁO ĐỘNG,", this.canvas.width / 2, 125);
+                    this.ctx.fillText("hãy lập tức ấn nút [CHUI HẦM] để bảo toàn lực lượng!", this.canvas.width / 2, 148);
+                } else if (this.level === 2) {
+                    this.ctx.font = "bold 22px 'Segoe UI'"; this.ctx.fillText("Tập Kích Ban Đêm (Level 2)", this.canvas.width / 2, 85);
+                    this.ctx.font = "14px 'Segoe UI'";
+                    this.ctx.fillText("Địch đã gọi viện binh hùng hậu. Không quân của chúng ném bom rát hơn.", this.canvas.width / 2, 125);
+                    this.ctx.fillText("Máu và sát thương lính địch tăng 50%. Hãy cẩn thận phòng tuyến!", this.canvas.width / 2, 148);
+                } else if (this.level === 3) {
+                    this.ctx.font = "bold 22px 'Segoe UI'"; this.ctx.fillText("Hoàng Hôn Đẫm Máu (Level 3)", this.canvas.width / 2, 85);
+                    this.ctx.font = "14px 'Segoe UI'";
+                    this.ctx.fillText("Trận chiến quyết định! Kẻ địch tung toàn bộ lực lượng tinh nhuệ nhất.", this.canvas.width / 2, 125);
+                    this.ctx.fillText("Sức mạnh địch tăng gấp đôi! Hãy dùng mọi nguồn lực để chiến thắng!", this.canvas.width / 2, 148);
+                }
+
                 this.ctx.fillStyle = "#c0392b"; this.ctx.font = "bold 15px 'Segoe UI'";
                 this.ctx.fillText("Quyết tử cho Tổ quốc quyết sinh!", this.canvas.width / 2, 190);
 
-                this.ctx.fillStyle = "#1b4f72"; this.ctx.fillRect(this.canvas.width / 2 - 50, 235, 100, 36);
-                this.ctx.fillStyle = "#fff"; this.ctx.font = "bold 15px 'Segoe UI'";
-                this.ctx.fillText("XUẤT QUÂN", this.canvas.width / 2, 258);
+                this.ctx.fillStyle = "#1b4f72"; this.ctx.fillRect(this.canvas.width / 2 - 60, 235, 120, 40);
+                this.ctx.fillStyle = "#fff"; this.ctx.font = "bold 16px 'Segoe UI'";
+                this.ctx.fillText("XUẤT QUÂN", this.canvas.width / 2, 260);
                 this.ctx.textAlign = "left";
             }
 
@@ -530,16 +551,16 @@ game_html = """
                 this.ctx.fillStyle = "#fff"; this.ctx.font = "16px 'Segoe UI'";
                 this.ctx.fillText(subtitle, this.canvas.width / 2, this.canvas.height / 2 + 10);
                 
-                this.ctx.fillStyle = "#34495e"; this.ctx.fillRect(this.canvas.width / 2 - 80, this.canvas.height / 2 + 40, 160, 40);
+                this.ctx.fillStyle = "#34495e"; this.ctx.fillRect(this.canvas.width / 2 - 100, this.canvas.height / 2 + 40, 200, 45);
                 this.ctx.fillStyle = "#fff"; this.ctx.font = "bold 16px 'Segoe UI'";
-                this.ctx.fillText(btnText, this.canvas.width / 2, this.canvas.height / 2 + 65);
+                this.ctx.fillText(btnText, this.canvas.width / 2, this.canvas.height / 2 + 68);
                 this.ctx.textAlign = "left";
             }
 
             run() {
                 if (this.statueHp <= 0) {
                     this.gameOver = true;
-                    this.drawMenuOverlay("💀 CĂN CỨ ĐÃ THẤT THỦ!", "Thất bại tại Level " + this.level, "BẤM ĐỂ CHƠI LẠI", "#e74c3c");
+                    this.drawMenuOverlay("💀 CĂN CỨ ĐÃ THẤT THỦ!", "Thất bại tại Level " + this.level, "BẤM VÀO ĐÂY ĐỂ CHƠI LẠI", "#e74c3c");
                     return;
                 }
                 
@@ -549,9 +570,9 @@ game_html = """
                         this.drawMenuOverlay("⭐ CHIẾN THẮNG CUỐI CÙNG!", "Giải phóng hoàn toàn đất nước!", "BẤM ĐỂ CHƠI LẠI TỪ ĐẦU", "#f1c40f");
                     } else {
                         this.levelComplete = true;
-                        this.drawMenuOverlay("🎖️ HOÀN THÀNH LEVEL " + this.level, "Căn cứ địch đã bị phá hủy. Hãy tiến sang khu vực tiếp theo!", "BẤM ĐỂ QUA MÀN", "#2ecc71");
+                        this.drawMenuOverlay("🎖️ HOÀN THÀNH LEVEL " + this.level, "Căn cứ địch đã bị phá hủy. Hãy tiến sang khu vực tiếp theo!", "BẤM VÀO ĐÂY ĐỂ QUA MÀN", "#2ecc71");
                     }
-                    return;
+                    return; // Lệnh này giúp dừng vòng lặp hiện tại, chờ click chuột để sang level mới
                 }
 
                 this.animFrame++;
@@ -567,7 +588,6 @@ game_html = """
                     this.drawBriefingScroll(); this.ctx.restore(); requestAnimationFrame(() => this.run()); return;
                 }
 
-                // Xử lý Còi báo động thả bom
                 if (this.airRaidWarning > 0) {
                     this.airRaidWarning--;
                     if (this.airRaidWarning === 1) {
@@ -580,13 +600,12 @@ game_html = """
                 this.units.forEach((u, idx) => {
                     if (u.isSpinning > 0) u.isSpinning--;
                     
-                    // NẾU ĐANG CHUI HẦM THÌ LÍNH KHÔNG DI CHUYỂN, KHÔNG BẮN (TRỪ NÔNG DÂN VẪN TẢI ĐẠN ĐƯỢC NHƯNG BÒ CHẬM)
                     if (this.isHiding && u.type !== 'miner') {
-                        // Không làm gì cả, nằm im
+                        // Nằm im chui hầm
                     } else {
                         if (u.type === 'miner') {
                             if (u.mineTarget) {
-                                let moveSpeed = this.isHiding ? u.speed * 0.3 : u.speed; // Bò chậm nếu đang báo động
+                                let moveSpeed = this.isHiding ? u.speed * 0.3 : u.speed; 
                                 if (u.state === 'going') {
                                     let dx = u.mineTarget.x - u.x; let dy = u.mineTarget.y - u.y; let dist = Math.hypot(dx, dy);
                                     if (dist > 3) { u.x += (dx / dist) * moveSpeed; u.y += (dy / dist) * moveSpeed; }
@@ -632,9 +651,8 @@ game_html = """
                 });
 
                 this.enemies.forEach((e, idx) => {
-                    // Kẻ địch không bị ảnh hưởng bởi chui hầm của ta
                     let nearestUnit = this.units.find(u => u.type !== 'miner' && Math.hypot(u.x - e.x, u.y - e.y) <= e.range);
-                    if (nearestUnit && !this.isHiding) { // Địch khó bắn trúng nếu ta đang chui hầm
+                    if (nearestUnit && !this.isHiding) { 
                         if (e.attackCd > 0) e.attackCd--;
                         else {
                             nearestUnit.hp -= e.dmg; this.particles.emit(nearestUnit.x, nearestUnit.y, '#f1c40f', 6);
@@ -671,12 +689,11 @@ game_html = """
 
         const GameManager = new RTSGameManager();
 
-        // Tự động sinh lính địch (Khó hơn theo Level)
         setInterval(() => {
             if (!GameManager.showBriefing && !GameManager.gameOver && !GameManager.levelComplete && GameManager.enemyStatueHp > 0 && GameManager.enemies.length < 30) {
                 let types = ['goblin', 'orc', 'shadow_mage', 'giant'];
                 let t = types[Math.floor(Math.random() * types.length)];
-                let levelMult = 1 + (GameManager.level - 1) * 0.5; // Địch mạnh lên 50% mỗi level
+                let levelMult = 1 + (GameManager.level - 1) * 0.5; 
                 let stats = {
                     goblin: { hp: 110 * levelMult, dmg: 14 * levelMult, range: 30, speed: 1.4, size: 0.95 },
                     orc: { hp: 230 * levelMult, dmg: 26 * levelMult, range: 35, speed: 1.0, size: 1.2 },
@@ -687,7 +704,6 @@ game_html = """
             }
         }, 3200);
 
-        // Sự kiện Còi Báo Động Ngẫu nhiên (Khoảng 35-45 giây 1 lần)
         setInterval(() => {
             if (!GameManager.showBriefing && !GameManager.gameOver && !GameManager.levelComplete && GameManager.level >= 1) {
                 GameManager.triggerAirRaidWarning();
