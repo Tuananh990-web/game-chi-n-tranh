@@ -1,4 +1,4 @@
-\import streamlit as st
+import streamlit as st
 
 st.set_page_config(
     page_title="Kháng Chiến Việt Nam - Đại Cáo Bình Ngô",
