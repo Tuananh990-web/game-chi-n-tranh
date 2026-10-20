@@ -16,7 +16,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("<h1 class='title-text'>⭐ KHÁNG CHIẾN VIỆT NAM - CHIẾN DỊCH TỔNG LỰC ⭐</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-text'>Engine Đồ họa Parallax, Hạt Vật lý, Bản đồ Radar & Ending Tuyên Ngôn Độc Lập 1945!</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-text'>Đã sửa lỗi kẹt Màn 2 (Lỗi Máu Ảo). Tối ưu logic chuyển cảnh và Cutscene Ending!</p>", unsafe_allow_html=True)
 
 game_html = """
 <!DOCTYPE html>
@@ -81,7 +81,7 @@ game_html = """
     <script>
         // ======================= AUDIO ENGINE =======================
         let bgMusic = new Audio(); bgMusic.loop = true; bgMusic.volume = 0.4;
-        let speechAudio = new Audio('https://upload.wikimedia.org/wikipedia/commons/e/e4/Tuyen_ngon_doc_lap.ogg'); // File âm thanh Tuyên Ngôn Độc Lập
+        let speechAudio = new Audio('https://upload.wikimedia.org/wikipedia/commons/e/e4/Tuyen_ngon_doc_lap.ogg');
         speechAudio.volume = 0.8;
         
         function playExternalMusic(url) { bgMusic.src = url; bgMusic.play().catch(e => console.log("Blocked by browser")); }
@@ -119,7 +119,7 @@ game_html = """
         // ======================= PHYSICS & PARTICLE ENGINE =======================
         class Particle {
             constructor(x, y, color, type) {
-                this.x = x; this.y = y; this.color = color; this.type = type; // 'spark', 'blood', 'debris', 'smoke'
+                this.x = x; this.y = y; this.color = color; this.type = type;
                 this.active = true;
                 
                 if (type === 'blood') {
@@ -128,41 +128,39 @@ game_html = """
                 } else if (type === 'debris') {
                     this.vx = (Math.random() - 0.5) * 12; this.vy = -Math.random() * 10 - 2;
                     this.radius = Math.random() * 4 + 2; this.gravity = 0.5; this.friction = 0.6; this.decay = 0.02;
-                } else { // smoke/sparks
+                } else {
                     this.vx = (Math.random() - 0.5) * 4; this.vy = (Math.random() - 0.5) * 4 - 1;
                     this.radius = Math.random() * 4 + 1; this.gravity = 0; this.friction = 0.95; this.decay = 0.03;
                 }
-                this.alpha = 1.0; this.groundY = 320 + Math.random() * 40; // Đáy màn hình
+                this.alpha = 1.0; this.groundY = 320 + Math.random() * 40;
             }
             updateAndDraw(ctx) {
                 if (!this.active) return;
                 this.vy += this.gravity; this.vx *= this.friction; 
                 this.x += this.vx; this.y += this.vy;
                 
-                // Va chạm mặt đất (Nảy lên)
                 if (this.y >= this.groundY) {
                     this.y = this.groundY;
-                    if (this.type === 'debris') { this.vy *= -0.5; this.vx *= 0.5; } // Mảnh vỡ nảy
-                    else if (this.type === 'blood') { this.vy = 0; this.vx = 0; this.decay = 0.002; } // Máu dính đất lâu mất
+                    if (this.type === 'debris') { this.vy *= -0.5; this.vx *= 0.5; }
+                    else if (this.type === 'blood') { this.vy = 0; this.vx = 0; this.decay = 0.002; }
                 }
                 
                 this.alpha -= this.decay;
                 if (this.alpha <= 0) { this.active = false; return; }
                 
                 ctx.globalAlpha = Math.max(0, this.alpha); ctx.fillStyle = this.color;
-                if (this.type === 'debris') { ctx.fillRect(this.x, this.y, this.radius, this.radius); } // Mảnh vỡ vuông
+                if (this.type === 'debris') { ctx.fillRect(this.x, this.y, this.radius, this.radius); }
                 else { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); }
                 ctx.globalAlpha = 1.0;
             }
         }
 
         class ParticleSystem {
-            constructor() { this.particles = []; this.bloodDecals = []; }
+            constructor() { this.particles = []; }
             emit(x, y, color, type, count) {
                 for (let i = 0; i < count; i++) this.particles.push(new Particle(x, y, color, type));
             }
             updateAndDraw(ctx) {
-                // Giới hạn hạt để tối ưu hiệu năng
                 if (this.particles.length > 500) this.particles.splice(0, this.particles.length - 500);
                 this.particles.forEach(p => p.updateAndDraw(ctx));
                 this.particles = this.particles.filter(p => p.active);
@@ -231,7 +229,6 @@ game_html = """
             draw(ctx, animFrame, isHiding = false) {
                 ctx.save();
                 
-                // ANIMATION XUẤT HIỆN / NHẢY DÙ
                 if (this.state === 'spawning') {
                     this.spawnY += 6; ctx.translate(this.x, this.spawnY);
                     if (this.spawnY >= this.y) { this.state = 'going'; this.spawnY = this.y; }
@@ -246,7 +243,6 @@ game_html = """
                     ctx.translate(this.x, this.y);
                 }
 
-                // CHUI HẦM NẰM SẤP
                 if (!this.isEnemy && isHiding && this.type !== 'giant') { ctx.rotate(Math.PI / 2); ctx.translate(15, -15); }
                 if (this.isEnemy) ctx.scale(-1, 1);
 
@@ -257,50 +253,38 @@ game_html = """
                 if (this.type === 'miner') unitColor = '#d35400';
                 else if (this.type === 'giant') unitColor = this.isEnemy ? '#4a2311' : '#273746'; 
 
-                // VẼ CHI TIẾT THEO LOẠI QUÂN
                 if (this.type === 'giant') {
-                    // TANK BASE
                     ctx.fillStyle = unitColor;
                     if(ctx.roundRect) ctx.roundRect(-35, -25, 70, 30, 6); else ctx.fillRect(-35, -25, 70, 30);
                     ctx.fill();
-                    
-                    // Lớp rằn ri (Camo)
                     ctx.fillStyle = this.isEnemy ? "#2c1005" : "#1a252f"; 
                     ctx.beginPath(); ctx.arc(-15, -15, 8, 0, Math.PI*2); ctx.fill();
                     ctx.beginPath(); ctx.arc(20, -5, 12, 0, Math.PI*2); ctx.fill();
                     ctx.beginPath(); ctx.arc(0, -20, 10, 0, Math.PI*2); ctx.fill();
                     
-                    // Bánh xích di chuyển
                     ctx.fillStyle = "#0a0a0a"; ctx.fillRect(-38, 5, 76, 12); 
                     ctx.fillStyle = "#7f8c8d";
                     let treadOffset = (this.state === 'going' ? (animFrame % 15) : 0) - 30;
                     for(let i=treadOffset; i<=35; i+=14) { ctx.beginPath(); ctx.arc(i, 11, 5, 0, Math.PI*2); ctx.fill(); }
                     
-                    // Tháp pháo và Giật lùi
                     ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(0, -25, 18, Math.PI, 0); ctx.fill();
                     let recoil = (this.attackCd > this.maxCd - 10) ? -12 : 0; 
                     ctx.lineWidth = 6; ctx.strokeStyle = "#000";
                     ctx.beginPath(); ctx.moveTo(0, -30); ctx.lineTo(45 + recoil, -30); ctx.stroke();
-                    // Lỗ thoát đạn / Đầu nòng
                     ctx.fillStyle = "#555"; ctx.fillRect(40 + recoil, -33, 8, 6);
                 } else {
-                    // BỘ BINH
-                    ctx.fillStyle = this.isEnemy ? "#d68910" : "#f5cba7"; // Da
+                    ctx.fillStyle = this.isEnemy ? "#d68910" : "#f5cba7";
                     ctx.beginPath(); ctx.arc(0, -20 * this.size, 7 * this.size, 0, Math.PI * 2); ctx.fill();
                     
-                    // Nón bảo hộ
                     ctx.fillStyle = this.isEnemy ? "#7b241c" : "#145a32"; 
                     ctx.beginPath(); ctx.arc(0, -22 * this.size, 8 * this.size, Math.PI, 0); ctx.fill();
                     ctx.fillRect(-8 * this.size, -22 * this.size, 16 * this.size, 3 * this.size); 
-                    if (!this.isEnemy && this.techLevel > 1) { ctx.fillStyle = "#f1c40f"; ctx.fillRect(-2 * this.size, -24 * this.size, 4 * this.size, 4 * this.size); } // Sao vàng
+                    if (!this.isEnemy && this.techLevel > 1) { ctx.fillStyle = "#f1c40f"; ctx.fillRect(-2 * this.size, -24 * this.size, 4 * this.size, 4 * this.size); }
 
-                    // Áo giáp
                     ctx.fillStyle = unitColor;
                     ctx.fillRect(-7 * this.size, -14 * this.size, 14 * this.size, 16 * this.size); 
-                    // Thắt lưng đạn
                     ctx.fillStyle = "#3e2723"; ctx.fillRect(-7 * this.size, -2 * this.size, 14 * this.size, 3 * this.size);
 
-                    // Vũ khí & Animation đánh
                     let armAngle = 0; let swordSwing = 0;
                     if (this.attackCd > this.maxCd - 12) {
                         armAngle = Math.PI/4; 
@@ -312,26 +296,25 @@ game_html = """
                     ctx.rotate(armAngle);
                     
                     if (this.type === 'archidon') {
-                        ctx.fillStyle = "#111"; ctx.fillRect(0, -3, 24, 5); // Súng trường dài
-                        ctx.fillStyle = "#8d6e63"; ctx.fillRect(2, 0, 5, 6); // Báng súng
+                        ctx.fillStyle = "#111"; ctx.fillRect(0, -3, 24, 5); 
+                        ctx.fillStyle = "#8d6e63"; ctx.fillRect(2, 0, 5, 6); 
                     } else if (this.type === 'spearton') {
-                        ctx.fillStyle = "#95a5a6"; ctx.fillRect(-3, -20, 4, 40); // Giáo
-                        ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(-1, -20, 3, 0, Math.PI*2); ctx.fill(); // Ngù đỏ
-                        ctx.fillStyle = "#2c3e50"; ctx.fillRect(8, -12, 8, 30); // Khiên lớn
+                        ctx.fillStyle = "#95a5a6"; ctx.fillRect(-3, -20, 4, 40); 
+                        ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(-1, -20, 3, 0, Math.PI*2); ctx.fill(); 
+                        ctx.fillStyle = "#2c3e50"; ctx.fillRect(8, -12, 8, 30); 
                     } else if (this.type === 'swordwrath') {
                         ctx.rotate(swordSwing);
-                        ctx.fillStyle = "#bdc3c7"; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(18, -18); ctx.lineTo(22, -12); ctx.fill(); // Mã tấu
+                        ctx.fillStyle = "#bdc3c7"; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(18, -18); ctx.lineTo(22, -12); ctx.fill(); 
                     } else if (this.type === 'magikill') {
-                        ctx.fillStyle = "#f39c12"; ctx.fillRect(8, -25, 4, 40); // Trượng
+                        ctx.fillStyle = "#f39c12"; ctx.fillRect(8, -25, 4, 40); 
                         ctx.fillStyle = "#3498db"; ctx.shadowBlur = 10; ctx.shadowColor = "#3498db"; 
-                        ctx.beginPath(); ctx.arc(10, -25, 7 + Math.random()*2, 0, Math.PI*2); ctx.fill(); // Ngọc sáng
+                        ctx.beginPath(); ctx.arc(10, -25, 7 + Math.random()*2, 0, Math.PI*2); ctx.fill(); 
                     } else if (this.type === 'miner') {
-                        ctx.fillStyle = "#7f8c8d"; ctx.fillRect(0, -15, 4, 30); // Cán cuốc
-                        ctx.fillRect(-8, -15, 20, 4); // Lưỡi cuốc
+                        ctx.fillStyle = "#7f8c8d"; ctx.fillRect(0, -15, 4, 30); 
+                        ctx.fillRect(-8, -15, 20, 4); 
                     }
                     ctx.restore();
 
-                    // Chân cử động
                     ctx.shadowColor = 'transparent'; ctx.strokeStyle = "#111"; ctx.lineWidth = 4 * this.size;
                     let swing = 0;
                     if ((this.state === 'going' || this.state === 'returning') && (!isHiding || this.isEnemy)) {
@@ -341,7 +324,6 @@ game_html = """
                     ctx.beginPath(); ctx.moveTo(4, 2 * this.size); ctx.lineTo(6 * this.size, 14 * this.size - swing); ctx.stroke();
                 }
 
-                // THANH MÁU HIỆU ỨNG TỤT TỪ TỪ
                 ctx.shadowColor = 'transparent'; 
                 ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(-20, -55, 40, 6);
                 let hpPercent = Math.max(0, this.hp / this.maxHp);
@@ -362,8 +344,8 @@ game_html = """
                 this.statueHp = 3000; this.enemyStatueHp = 3000;
                 this.gold = 500; this.techLevel = 1; this.currentCommand = 'ATTACK';
                 
-                // Trạng thái Game
-                this.state = 'MENU'; // MENU, PLAYING, VICTORY_SPEECH, GAME_OVER
+                this.state = 'MENU'; 
+                this.transitionTimer = 0;
                 this.screenShake = 0; this.animFrame = 0; 
                 
                 this.isHiding = false; 
@@ -380,7 +362,6 @@ game_html = """
                 this.goldMines = [ { x: 180, y: 150, miner: null }, { x: 230, y: 200, miner: null }, { x: 280, y: 260, miner: null }, { x: 200, y: 340, miner: null }, { x: 260, y: 130, miner: null }, { x: 310, y: 180, miner: null } ];
                 this.units = []; this.enemies = []; this.floatingTexts = [];
                 
-                // MAP & PARALLAX BACKGROUND
                 this.mapColors = {
                     1: { sky: 'linear-gradient(to bottom, #3498db 0%, #85c1e9 50%, #2ecc71 50%, #27ae60 100%)', sun: true, clouds: true, mtn1: '#21618c', mtn2: '#2874a6' }, 
                     2: { sky: 'linear-gradient(to bottom, #154360 0%, #1a5276 50%, #1e8449 50%, #145a32 100%)', moon: true, stars: true, mtn1: '#0e2b3e', mtn2: '#123955' }, 
@@ -391,7 +372,6 @@ game_html = """
                 this.stars = Array.from({length: 100}, () => ({x: Math.random()*1200, y: Math.random()*200, radius: Math.random()*1.5+0.5, blink: Math.random()*0.1}));
                 this.rain = Array.from({length: 200}, () => ({x: Math.random()*1500, y: Math.random()*450, speedY: 20+Math.random()*15, speedX: -4-Math.random()*5}));
 
-                // VICTORY SPEECH VARIABLES
                 this.speechY = this.canvas.height;
                 this.speechLines = [
                     "Hỡi đồng bào cả nước,",
@@ -417,13 +397,13 @@ game_html = """
                     const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top;
                     
                     if (this.state === 'MENU') { 
-                        if (mouseX >= this.canvas.width/2 - 140 && mouseX <= this.canvas.width/2 + 140 && mouseY >= 250 && mouseY <= 300) {
+                        if (mouseX >= this.canvas.width/2 - 160 && mouseX <= this.canvas.width/2 + 160 && mouseY >= 240 && mouseY <= 320) {
                             this.state = 'PLAYING';
                         }
                         return; 
                     }
                     if (this.state === 'GAME_OVER') { this.resetGame(true); this.state = 'MENU'; this.run(); return; }
-                    if (this.state === 'VICTORY_SPEECH') { this.resetGame(true); this.state = 'MENU'; this.run(); return; }
+                    if (this.state === 'VICTORY_SPEECH') { this.resetGame(true); this.state = 'MENU'; return; }
                 });
 
                 document.getElementById('btnAttack').onclick = () => this.setCommand('ATTACK');
@@ -436,7 +416,7 @@ game_html = """
                         btnBunker.style.background = "linear-gradient(145deg, #2ecc71, #27ae60)"; btnBunker.innerText = "🏃 ĐANG TRÚ ẨN (BẤM ĐỂ DẬY)";
                         this.addFloatingText("Toàn quân Chui Hầm!", this.canvas.width/2, 200, '#2ecc71', true);
                     } else {
-                        btnBunker.style.background = "linear-gradient(145deg, #c0392b, #78281f)"; btnBunker.innerText = "🕳️ CHUI HẦM BẢO TOÀN LỰC LƯỢNG";
+                        btnBunker.style.background = "linear-gradient(145deg, #c0392b, #78281f)"; btnBunker.innerText = "🕳️ LỆNH: CHUI HẦM BẢO TOÀN";
                         this.addFloatingText("Toàn quân Tấn Công!", this.canvas.width/2, 200, '#e74c3c', true);
                     }
                 };
@@ -465,7 +445,7 @@ game_html = """
                     return; 
                 }
                 this.canvas.style.background = this.mapColors[this.level].sky;
-                this.resetGame(false); this.state = 'MENU'; this.run(); 
+                this.resetGame(false); this.state = 'MENU'; 
             }
 
             resetGame(fullReset = true) {
@@ -474,18 +454,18 @@ game_html = """
                 
                 this.statueHp = 3000; this.enemyStatueHp = 3000 + (this.level * 2500); 
                 this.units = []; this.enemies = []; this.floatingTexts = []; this.projectiles = []; this.particles = new ParticleSystem();
-                this.isHiding = false; document.getElementById('btnBunker').style.background = "linear-gradient(145deg, #c0392b, #78281f)"; document.getElementById('btnBunker').innerText = "🕳️ CHUI HẦM BẢO TOÀN LỰC LƯỢNG";
+                this.isHiding = false; document.getElementById('btnBunker').style.background = "linear-gradient(145deg, #c0392b, #78281f)"; document.getElementById('btnBunker').innerText = "🕳️ LỆNH: CHUI HẦM BẢO TOÀN";
                 this.airRaidWarning = 0; this.isEnemyBomberActive = false; this.airRaidTimer = 0; 
+                this.transitionTimer = 0;
                 
                 this.ourEmergencyTriggered = false; this.enemyEmergencyTriggered = false;
                 this.ourShieldTimer = 0; this.enemyShieldTimer = 0;
                 
                 this.goldMines.forEach(m => m.miner = null);
-                document.getElementById("levelText").innerText = this.level;
                 this.updateUI();
             }
 
-            setCommand(cmd) { this.currentCommand = cmd; this.isHiding = false; document.getElementById('btnBunker').style.background = "linear-gradient(145deg, #c0392b, #78281f)"; document.getElementById('btnBunker').innerText = "🕳️ CHUI HẦM BẢO TOÀN LỰC LƯỢNG"; }
+            setCommand(cmd) { this.currentCommand = cmd; this.isHiding = false; document.getElementById('btnBunker').style.background = "linear-gradient(145deg, #c0392b, #78281f)"; document.getElementById('btnBunker').innerText = "🕳️ LỆNH: CHUI HẦM BẢO TOÀN"; }
             addFloatingText(text, x, y, color = '#f1c40f', isBig=false) { this.floatingTexts.push({ text, x, y, alpha: 1.0, color, isBig }); }
             getCurrentPopulation() { let count = 0; this.units.forEach(u => { if (u.type === 'spearton') count += 3; else if (u.type === 'magikill') count += 5; else if (u.type === 'giant') count += 4; else count += 1; }); return count; }
 
@@ -538,8 +518,10 @@ game_html = """
             }
 
             updateUI() {
-                document.getElementById("hpText").innerText = Math.max(0, Math.floor(this.statueHp));
-                document.getElementById("enemyHpText").innerText = Math.max(0, Math.floor(this.enemyStatueHp));
+                document.getElementById("levelText").innerText = this.level;
+                // FIX LỖI MÁU ẢO (Dùng Math.ceil để hiển thị 1 nếu máu còn 0.1)
+                document.getElementById("hpText").innerText = Math.ceil(this.statueHp);
+                document.getElementById("enemyHpText").innerText = Math.ceil(this.enemyStatueHp);
                 document.getElementById("goldText").innerText = Math.floor(this.gold);
                 document.getElementById("popText").innerText = this.getCurrentPopulation();
                 
@@ -553,7 +535,6 @@ game_html = """
             drawEnvironment() {
                 let env = this.mapColors[this.level];
                 
-                // MẶT TRỜI / MẶT TRĂNG
                 if(env.sun) {
                     this.ctx.fillStyle = "rgba(241, 196, 15, 0.9)"; this.ctx.shadowBlur = 50; this.ctx.shadowColor = "#f1c40f";
                     this.ctx.beginPath(); this.ctx.arc(100, 70, 35, 0, Math.PI*2); this.ctx.fill(); this.ctx.shadowBlur = 0;
@@ -565,23 +546,18 @@ game_html = """
                     this.ctx.shadowBlur = 0;
                 }
 
-                // LỚP NÚI PHÍA XA (PARALLAX EFFECT)
-                // Lớp núi 1 (Đi chậm)
                 this.ctx.fillStyle = env.mtn1;
                 this.ctx.beginPath(); this.ctx.moveTo(0, 200);
                 for(let i=0; i<=this.canvas.width; i+=100) { this.ctx.lineTo(i, 100 + Math.sin(i*0.01 + this.animFrame*0.005)*40); }
                 this.ctx.lineTo(this.canvas.width, 250); this.ctx.lineTo(0, 250); this.ctx.fill();
                 
-                // Lớp núi 2 (Đi nhanh hơn)
                 this.ctx.fillStyle = env.mtn2;
                 this.ctx.beginPath(); this.ctx.moveTo(0, 250);
                 for(let i=0; i<=this.canvas.width; i+=80) { this.ctx.lineTo(i, 150 + Math.cos(i*0.02 + this.animFrame*0.01)*50); }
                 this.ctx.lineTo(this.canvas.width, 250); this.ctx.lineTo(0, 250); this.ctx.fill();
 
-                // MẶT ĐẤT CHIẾN TRƯỜNG
                 this.ctx.fillStyle = "rgba(0,0,0,0.3)"; this.ctx.fillRect(0, 200, this.canvas.width, 220);
 
-                // MÂY / SAO
                 if(env.clouds) {
                     this.ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
                     this.clouds.forEach(c => {
@@ -618,17 +594,14 @@ game_html = """
             }
 
             drawBases() {
-                // =============== THÀNH TA (CĂN CỨ CÁCH MẠNG) ===============
                 this.ctx.shadowBlur = 15; this.ctx.shadowColor = "#000";
-                this.ctx.fillStyle = "#5d4037"; this.ctx.fillRect(10, 150, 90, 270); // Tường gạch
+                this.ctx.fillStyle = "#5d4037"; this.ctx.fillRect(10, 150, 90, 270); 
                 this.ctx.fillStyle = "#3e2723"; 
-                this.ctx.fillRect(10, 130, 25, 30); this.ctx.fillRect(45, 130, 25, 30); this.ctx.fillRect(80, 130, 20, 30); // Răng cưa
+                this.ctx.fillRect(10, 130, 25, 30); this.ctx.fillRect(45, 130, 25, 30); this.ctx.fillRect(80, 130, 20, 30); 
                 
-                // Bao cát phòng thủ
                 this.ctx.fillStyle = "#8d6e63"; this.ctx.beginPath(); if(this.ctx.roundRect) this.ctx.roundRect(90, 320, 30, 20, 5); else this.ctx.fillRect(90, 320, 30, 20); this.ctx.fill();
                 this.ctx.fillStyle = "#795548"; this.ctx.beginPath(); if(this.ctx.roundRect) this.ctx.roundRect(105, 305, 25, 20, 5); else this.ctx.fillRect(105, 305, 25, 20); this.ctx.fill();
                 
-                // Lá chắn tử thủ ta
                 if(this.ourShieldTimer > 0) {
                     this.ctx.shadowBlur = 40; this.ctx.shadowColor = "#3498db";
                     this.ctx.strokeStyle = `rgba(52, 152, 219, ${0.6 + Math.sin(this.animFrame*0.15)*0.4})`;
@@ -637,34 +610,28 @@ game_html = """
                     this.ctx.shadowBlur = 0;
                 }
 
-                // Cột Cờ sao vàng tung bay
                 this.ctx.fillStyle = "#bdc3c7"; this.ctx.fillRect(50, 30, 5, 100);
                 this.ctx.fillStyle = "#e74c3c"; 
                 this.ctx.beginPath(); this.ctx.moveTo(55, 35); this.ctx.lineTo(105, 55 + Math.sin(this.animFrame*0.2)*12); this.ctx.lineTo(55, 85); this.ctx.fill();
                 this.ctx.fillStyle = "#f1c40f"; 
-                // Vẽ ngôi sao vàng chuẩn
                 this.ctx.save(); this.ctx.translate(68, 58); this.ctx.beginPath();
                 for(let i=0; i<5; i++) { this.ctx.lineTo(Math.cos((18+i*72)*Math.PI/180)*8, -Math.sin((18+i*72)*Math.PI/180)*8); this.ctx.lineTo(Math.cos((54+i*72)*Math.PI/180)*3.5, -Math.sin((54+i*72)*Math.PI/180)*3.5); }
                 this.ctx.closePath(); this.ctx.fill(); this.ctx.restore();
 
-                // Kho lương thực
                 this.goldMines.forEach((m, idx) => {
                     this.ctx.fillStyle = "#f39c12"; this.ctx.beginPath(); this.ctx.arc(m.x, m.y, 18, 0, Math.PI * 2); this.ctx.fill();
                     this.ctx.fillStyle = "#e67e22"; this.ctx.beginPath(); this.ctx.arc(m.x-5, m.y+5, 14, 0, Math.PI * 2); this.ctx.fill();
                     this.ctx.fillStyle = "#fff"; this.ctx.font = "bold 11px 'Segoe UI'"; this.ctx.fillText("L" + (idx + 1), m.x - 9, m.y + 4);
                 });
 
-                // =============== THÀNH ĐỊCH (LÔ CỐT THÉP) ===============
                 let ex = this.canvas.width - 100;
                 this.ctx.fillStyle = "#1c2833"; this.ctx.fillRect(ex, 150, 90, 270); 
                 this.ctx.fillStyle = "#111"; this.ctx.fillRect(ex, 130, 25, 30); this.ctx.fillRect(ex+35, 130, 25, 30); this.ctx.fillRect(ex+70, 130, 20, 30); 
                 
-                // Rào kẽm gai
                 this.ctx.strokeStyle = "#555"; this.ctx.lineWidth = 2;
                 this.ctx.beginPath(); this.ctx.moveTo(ex-30, 350); this.ctx.lineTo(ex, 320); this.ctx.stroke();
                 this.ctx.beginPath(); this.ctx.moveTo(ex-30, 320); this.ctx.lineTo(ex, 350); this.ctx.stroke();
 
-                // Lá chắn tử thủ địch
                 if(this.enemyShieldTimer > 0) {
                     this.ctx.shadowBlur = 40; this.ctx.shadowColor = "#e74c3c";
                     this.ctx.strokeStyle = `rgba(231, 76, 60, ${0.6 + Math.sin(this.animFrame*0.15)*0.4})`;
@@ -673,32 +640,22 @@ game_html = """
                     this.ctx.shadowBlur = 0;
                 }
 
-                // Cờ địch
                 this.ctx.fillStyle = "#bdc3c7"; this.ctx.fillRect(ex+40, 30, 5, 100);
                 this.ctx.fillStyle = "#000"; 
                 this.ctx.beginPath(); this.ctx.moveTo(ex+40, 35); this.ctx.lineTo(ex-10, 55 + Math.sin(this.animFrame*0.2)*12); this.ctx.lineTo(ex+40, 85); this.ctx.fill();
             }
 
             drawMinimap() {
-                // Radar nhỏ trên cùng
                 this.ctx.fillStyle = "rgba(0, 0, 0, 0.6)"; this.ctx.strokeStyle = "#f1c40f"; this.ctx.lineWidth = 2;
                 this.ctx.fillRect(this.canvas.width/2 - 150, 10, 300, 30); this.ctx.strokeRect(this.canvas.width/2 - 150, 10, 300, 30);
                 
-                // Vẽ chấm quân ta
                 this.ctx.fillStyle = "#3498db";
                 this.units.forEach(u => {
-                    if(u.type !== 'miner') {
-                        let mx = (this.canvas.width/2 - 150) + (u.x / this.canvas.width) * 300;
-                        this.ctx.fillRect(mx, 20, 3, 10);
-                    }
+                    if(u.type !== 'miner') { let mx = (this.canvas.width/2 - 150) + (u.x / this.canvas.width) * 300; this.ctx.fillRect(mx, 20, 3, 10); }
                 });
                 
-                // Vẽ chấm quân địch
                 this.ctx.fillStyle = "#e74c3c";
-                this.enemies.forEach(e => {
-                    let mx = (this.canvas.width/2 - 150) + (e.x / this.canvas.width) * 300;
-                    this.ctx.fillRect(mx, 20, 3, 10);
-                });
+                this.enemies.forEach(e => { let mx = (this.canvas.width/2 - 150) + (e.x / this.canvas.width) * 300; this.ctx.fillRect(mx, 20, 3, 10); });
             }
 
             drawMenuOverlay(title, subtitle, btnText, color) {
@@ -707,7 +664,7 @@ game_html = """
                 this.ctx.fillText(title, this.canvas.width / 2, this.canvas.height / 2 - 40); this.ctx.shadowBlur = 0;
                 
                 if (this.level === 1) subtitle = "MÀN 1: BẢO VỆ VÙNG GIẢI PHÓNG - Cẩn thận máy bay ném bom mỗi 60s!";
-                else if (this.level === 2) subtitle = "MÀN 2: TẬP KÍCH BAN ĐÊM - Địch thủ thành (Dưới 50% HP) gọi viện binh!";
+                else if (this.level === 2) subtitle = "MÀN 2: TẬP KÍCH BAN ĐÊM - Địch tử thủ (Dưới 50% HP) gọi viện binh!";
                 else if (this.level === 3) subtitle = "MÀN 3: HOÀNG HÔN ĐẪM MÁU - Trận chiến sinh tử. Quân ta thủ thành GIẢM 90% DMG!";
                 
                 this.ctx.fillStyle = "#ecf0f1"; this.ctx.font = "italic 20px 'Segoe UI'";
@@ -718,27 +675,21 @@ game_html = """
             }
             
             drawVictorySpeech() {
-                // Background đỏ rực
                 this.ctx.fillStyle = "#c0392b"; this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                 
-                // Sao vàng khổng lồ xoay giữa nền
                 this.ctx.save(); this.ctx.translate(this.canvas.width/2, this.canvas.height/2); this.ctx.rotate(this.animFrame*0.005);
                 this.ctx.fillStyle = "rgba(241, 196, 15, 0.3)"; this.ctx.beginPath();
                 for(let i=0; i<5; i++) { this.ctx.lineTo(Math.cos((18+i*72)*Math.PI/180)*250, -Math.sin((18+i*72)*Math.PI/180)*250); this.ctx.lineTo(Math.cos((54+i*72)*Math.PI/180)*100, -Math.sin((54+i*72)*Math.PI/180)*100); }
                 this.ctx.closePath(); this.ctx.fill(); this.ctx.restore();
                 
-                // Cuộn chữ từ dưới lên
                 this.ctx.fillStyle = "#f1c40f"; this.ctx.font = "bold 26px 'Segoe UI'"; this.ctx.textAlign = "center";
                 this.ctx.shadowBlur = 10; this.ctx.shadowColor = "#000";
                 
-                for(let i=0; i<this.speechLines.length; i++) {
-                    this.ctx.fillText(this.speechLines[i], this.canvas.width/2, this.speechY + i*45);
-                }
+                for(let i=0; i<this.speechLines.length; i++) { this.ctx.fillText(this.speechLines[i], this.canvas.width/2, this.speechY + i*45); }
                 this.ctx.textAlign = "left"; this.ctx.shadowBlur = 0;
                 
-                this.speechY -= 0.6; // Tốc độ cuộn chậm rãi hào hùng
+                this.speechY -= 0.6; 
                 
-                // Nút skip/restart
                 if(this.speechY < -200) {
                     this.ctx.fillStyle = "rgba(0,0,0,0.8)"; this.ctx.fillRect(this.canvas.width/2 - 100, this.canvas.height - 60, 200, 40);
                     this.ctx.fillStyle = "#fff"; this.ctx.font = "bold 16px 'Segoe UI'"; this.ctx.textAlign = "center";
@@ -770,17 +721,27 @@ game_html = """
                     requestAnimationFrame(() => this.run()); return;
                 }
 
-                if (this.statueHp <= 0) { this.state = 'GAME_OVER'; this.drawMenuOverlay("💀 THÀNH TRÌ ĐÃ VỠ!", "Quân ta đã hy sinh anh dũng tại Màn " + this.level, "BẤM VÀO ĐÂY ĐỂ CHƠI LẠI", "#e74c3c"); return; }
+                if (this.statueHp <= 0 && this.state === 'PLAYING') { 
+                    this.state = 'GAME_OVER'; 
+                    this.drawMenuOverlay("💀 THÀNH TRÌ ĐÃ VỠ!", "Quân ta đã hy sinh anh dũng tại Màn " + this.level, "BẤM VÀO ĐÂY ĐỂ CHƠI LẠI", "#e74c3c"); 
+                    return; 
+                }
                 
-                if (this.enemyStatueHp <= 0 && !this.levelComplete && this.state === 'PLAYING') {
-                    this.levelComplete = true;
+                // FIX LỖI MÁU ẢO KẸT MÀN
+                if (this.enemyStatueHp <= 0 && this.state === 'PLAYING') {
+                    this.state = 'TRANSITION';
+                    this.transitionTimer = 180; // Dừng lại ngắm chiến thắng 3 giây trước khi qua màn
                     if (this.level >= this.maxLevel) {
-                        // CHUYỂN SANG CUTSCENE TUYÊN NGÔN SAU 3 GIÂY
-                        setTimeout(() => { this.nextLevel(); }, 3000);
                         this.addFloatingText("⭐ ĐẠI THẮNG MÙA XUÂN! ĐANG CHUYỂN CẢNH...", this.canvas.width/2-200, this.canvas.height/2, '#f1c40f', true);
                     } else {
-                        setTimeout(() => { this.nextLevel(); }, 2000);
                         this.addFloatingText("🎖️ CĂN CỨ ĐỊCH BỊ SAN PHẲNG!", this.canvas.width/2-150, this.canvas.height/2, '#2ecc71', true);
+                    }
+                }
+                
+                if (this.state === 'TRANSITION') {
+                    this.transitionTimer--;
+                    if (this.transitionTimer <= 0) {
+                        this.nextLevel();
                     }
                 }
 
@@ -795,9 +756,8 @@ game_html = """
                     this.ctx.restore(); requestAnimationFrame(() => this.run()); return; 
                 }
                 
-                this.drawMinimap(); // VẼ RADAR
+                this.drawMinimap(); 
                 
-                // KIỂM TRA TỬ THỦ CĂN CỨ
                 if (this.ourShieldTimer > 0) this.ourShieldTimer--;
                 if (this.enemyShieldTimer > 0) this.enemyShieldTimer--;
                 
@@ -819,7 +779,6 @@ game_html = """
                 
                 this.updateUI(); 
 
-                // KHÔNG QUÂN NÉM BOM
                 this.airRaidTimer++;
                 let targetFrames = this.level === 1 ? 3600 : (this.level === 2 ? 1800 : 900); 
                 if (this.airRaidTimer >= targetFrames) { this.triggerAirRaidWarning(); this.airRaidTimer = 0; }
@@ -855,7 +814,6 @@ game_html = """
                     if (this.planeX > this.canvas.width + 150) this.isPlaneActive = false;
                 }
 
-                // CẬP NHẬT ĐẠN ĐẠO VÀ HẠT
                 this.projectiles.forEach((proj, idx) => { proj.updateAndDraw(this.ctx, this.particles); if (!proj.active) this.projectiles.splice(idx, 1); });
                 this.particles.updateAndDraw(this.ctx);
 
@@ -910,7 +868,8 @@ game_html = """
                                             this.projectiles.push(new Projectile(u.x, u.y-25, {x: this.canvas.width-100, y: 260, hp: 9999}, pType, actualDmg, false));
                                             if (u.type === 'giant') this.screenShake = 8;
                                         }
-                                        this.enemyStatueHp -= actualDmg; 
+                                        // FIX MÁU ẢO ÉP VỀ 0
+                                        this.enemyStatueHp = Math.max(0, this.enemyStatueHp - actualDmg); 
                                         setTimeout(() => { this.particles.emit(this.canvas.width - 100, 260, '#f1c40f', 'spark', 25); this.addFloatingText("-" + Math.floor(actualDmg), this.canvas.width - 100, 200 + Math.random()*50, '#f1c40f', true); }, 200);
                                         u.attackCd = u.maxCd; 
                                     }
@@ -949,7 +908,8 @@ game_html = """
                                     this.projectiles.push(new Projectile(e.x, e.y-25, {x: 100, y: 260, hp: 9999}, pType, actualDmg, true));
                                     if (e.type === 'giant') this.screenShake = 8;
                                 }
-                                this.statueHp -= actualDmg; 
+                                // FIX MÁU ẢO ÉP VỀ 0
+                                this.statueHp = Math.max(0, this.statueHp - actualDmg); 
                                 setTimeout(() => { this.particles.emit(100, 260, '#e74c3c', 'spark', 25); this.addFloatingText("-" + Math.floor(actualDmg), 100, 200 + Math.random()*50, '#e74c3c', true); }, 200);
                                 e.attackCd = e.maxCd; 
                             }
